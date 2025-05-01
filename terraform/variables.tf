@@ -12,3 +12,8 @@ variable "zone" {
   type    = string
   default = "us-central1-c"
 }
+
+variable "create_service_account" {
+  type    = bool
+  default = false
+}
