@@ -1,9 +1,4 @@
-provider "google" {
-  project = var.project_id
-  region  = var.region
-  zone    = var.zone
-}
-
+// This file manages the APIs required for GKE and other services.
 resource "google_project_service" "compute-api" {
   service                    = "compute.googleapis.com"
   disable_on_destroy         = true
