@@ -1,7 +1,7 @@
 // This file manages the APIs required for GKE and other services.
 resource "google_project_service" "compute-api" {
   service                    = "compute.googleapis.com"
-  disable_on_destroy         = true
+  disable_on_destroy         = false
   disable_dependent_services = true
 }
 
@@ -11,22 +11,11 @@ resource "google_project_service" "container-api" {
   disable_dependent_services = true
 }
 
-/*
 resource "google_project_service" "cloud-run-api" {
   service                    = "run.googleapis.com"
   disable_on_destroy         = true
   disable_dependent_services = true
 }
-
-// Optional: Service account (conditionally created)
-resource "google_service_account" "default" {
-  count        = var.create_service_account ? 1 : 0
-  account_id   = "gke-service-account"
-  display_name = "GKE Service Account"
-  description  = "Service account for GKE"
-  depends_on   = [google_project_service.cloud-run-api]
-}
-*/
 
 resource "google_container_cluster" "gke-cluster" {
   depends_on = [
@@ -57,8 +46,24 @@ resource "google_container_node_pool" "gke_preemptible_nodes" {
 }
 
 /*
+// Optional: Service account (conditionally created)
+resource "google_service_account" "default" {
+  depends_on   = []
+  count        = var.create_service_account ? 1 : 0
+  account_id   = "gke-service-account"
+  display_name = "GKE Service Account"
+  description  = "Service account for GKE"
+}
+*/
+
+/*
 resource "google_container_cluster" "autopilot" {
-  depends_on          = [google_project_service.kubernetes-api]
+  depends_on = [
+    google_project_service.container-api,
+    google_project_service.compute-api,
+    google_compute_network.vpc_network,
+    google_compute_subnetwork.subnet
+  ]
   name                = "autopilot"
   enable_autopilot    = true
   deletion_protection = false
