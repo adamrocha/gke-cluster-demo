@@ -1,4 +1,4 @@
-// This file manages the APIs required for GKE and other services.
+
 resource "google_project_service" "compute-api" {
   service                    = "compute.googleapis.com"
   disable_on_destroy         = false
@@ -7,20 +7,26 @@ resource "google_project_service" "compute-api" {
 
 resource "google_project_service" "container-api" {
   service                    = "container.googleapis.com"
+  disable_on_destroy         = false
+  disable_dependent_services = true
+}
+/*
+resource "google_project_service" "cloud-logging-api" {
+  service                    = "logging.googleapis.com"
   disable_on_destroy         = true
   disable_dependent_services = true
 }
-
-resource "google_project_service" "cloud-run-api" {
-  service                    = "run.googleapis.com"
+resource "google_project_service" "cloud-monitoring-api" {
+  service                    = "monitoring.googleapis.com"
   disable_on_destroy         = true
   disable_dependent_services = true
 }
+*/
 
 resource "google_container_cluster" "gke-cluster" {
   depends_on = [
-    google_project_service.container-api,
-    google_project_service.compute-api
+    google_project_service.compute-api,
+    google_project_service.container-api
   ]
   name                     = "gke-cluster"
   network                  = google_compute_network.vpc_network.name

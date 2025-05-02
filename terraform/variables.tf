@@ -1,6 +1,6 @@
 variable "project_id" {
   type    = string
-  default = "gke-cluster-432717"
+  default = "gke-cluster-458610"
 }
 
 variable "region" {
