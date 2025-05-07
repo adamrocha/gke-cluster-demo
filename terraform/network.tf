@@ -17,7 +17,7 @@ resource "google_compute_subnetwork" "subnet" {
   ]
   name          = "gke-subnet"
   ip_cidr_range = "10.2.0.0/16"
-  network       = google_compute_network.vpc_network.id
+  network       = google_compute_network.vpc_network.name
   description   = "Subnet for GKE"
 }
 

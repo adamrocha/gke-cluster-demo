@@ -10,18 +10,6 @@ resource "google_project_service" "container-api" {
   disable_on_destroy         = true
   disable_dependent_services = true
 }
-/*
-resource "google_project_service" "cloud-logging-api" {
-  service                    = "logging.googleapis.com"
-  disable_on_destroy         = true
-  disable_dependent_services = true
-}
-resource "google_project_service" "cloud-monitoring-api" {
-  service                    = "monitoring.googleapis.com"
-  disable_on_destroy         = true
-  disable_dependent_services = true
-}
-*/
 
 # IAM roles for the service account
 locals {
@@ -67,21 +55,20 @@ resource "google_container_node_pool" "gke-pool" {
   initial_node_count = 1
   autoscaling {
     min_node_count = 1
-    max_node_count = 5
+    max_node_count = 6
   }
-
   node_config {
     service_account = google_service_account.gke-service-account.email
-
-    preemptible  = true
-    machine_type = "e2-micro"
+    preemptible     = true
+    //machine_type    = "e2-micro"
+    machine_type = "e2-medium"
+    disk_type    = "pd-standard"
     disk_size_gb = 50
     oauth_scopes = ["https://www.googleapis.com/auth/cloud-platform"]
     labels = {
       env = "dev"
     }
   }
-
   management {
     auto_repair  = true
     auto_upgrade = true
@@ -108,8 +95,7 @@ resource "google_container_cluster" "gke-cluster" {
   node_config {
     service_account = google_service_account.gke-service-account.email
     preemptible     = true
-    //machine_type    = "e2-micro"
-    //disk_size_gb = 50
+    //node_group      = google_container_node_pool.gke-pool.name
     oauth_scopes = [
       "https://www.googleapis.com/auth/cloud-platform"
     ]
