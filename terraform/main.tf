@@ -9,19 +9,7 @@ resource "google_project_service" "gke-services" {
   disable_on_destroy         = true
   disable_dependent_services = true
 }
-/*
-resource "google_project_service" "compute-api" {
-  service                    = "compute.googleapis.com"
-  disable_on_destroy         = false
-  disable_dependent_services = true
-}
 
-resource "google_project_service" "container-api" {
-  service                    = c
-  disable_on_destroy         = true
-  disable_dependent_services = true
-}
-*/
 resource "google_project_iam_member" "gke-node-pool-roles" {
   for_each = toset([
     "roles/container.nodeServiceAccount",
