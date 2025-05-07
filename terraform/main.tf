@@ -5,8 +5,8 @@ resource "google_project_service" "gke-services" {
   ])
   project                    = var.project_id
   service                    = each.key
-  disable_on_destroy         = true
-  disable_dependent_services = true
+  disable_on_destroy         = false
+  disable_dependent_services = false
 }
 
 resource "google_project_iam_member" "gke-sa-roles" {
