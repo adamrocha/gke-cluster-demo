@@ -1,4 +1,15 @@
+resource "google_project_service" "gke-services" {
+  for_each = toset([
+    "compute.googleapis.com",
+    "container.googleapis.com"
+  ])
 
+  project                    = var.project_id
+  service                    = each.key
+  disable_on_destroy         = true
+  disable_dependent_services = true
+}
+/*
 resource "google_project_service" "compute-api" {
   service                    = "compute.googleapis.com"
   disable_on_destroy         = false
@@ -6,27 +17,22 @@ resource "google_project_service" "compute-api" {
 }
 
 resource "google_project_service" "container-api" {
-  service                    = "container.googleapis.com"
+  service                    = c
   disable_on_destroy         = true
   disable_dependent_services = true
 }
-
-# IAM roles for the service account
-locals {
-  sa_roles = [
+*/
+resource "google_project_iam_member" "gke-node-pool-roles" {
+  for_each = toset([
     "roles/container.nodeServiceAccount",
     "roles/logging.logWriter",
     "roles/monitoring.metricWriter",
     "roles/compute.networkUser",
     "roles/editor"
-  ]
-}
-
-resource "google_project_iam_member" "gke-node-pool-roles" {
-  for_each = toset(local.sa_roles)
-  project  = var.project_id
-  role     = each.key
-  member   = "serviceAccount:${google_service_account.gke-service-account.email}"
+  ])
+  project = var.project_id
+  role    = each.key
+  member  = "serviceAccount:${google_service_account.gke-service-account.email}"
 }
 
 // Optional: Service account (conditionally created)
@@ -44,8 +50,7 @@ resource "google_service_account" "gke-service-account" {
 resource "google_container_node_pool" "gke-pool" {
   depends_on = [
     google_container_cluster.gke-cluster,
-    google_project_service.compute-api,
-    google_project_service.container-api,
+    google_project_service.gke-services,
     google_compute_network.vpc_network,
     google_compute_subnetwork.subnet,
     google_service_account.gke-service-account
@@ -77,16 +82,13 @@ resource "google_container_node_pool" "gke-pool" {
 
 resource "google_container_cluster" "gke-cluster" {
   depends_on = [
-    google_project_service.compute-api,
-    google_project_service.container-api,
+    google_project_service.gke-services,
     google_service_account.gke-service-account,
     google_project_iam_member.gke-node-pool-roles
   ]
   name                     = "gke-cluster"
   network                  = google_compute_network.vpc_network.name
   subnetwork               = google_compute_subnetwork.subnet.name
-  location                 = var.region
-  project                  = var.project_id
   remove_default_node_pool = true
   initial_node_count       = 1
   deletion_protection      = false
