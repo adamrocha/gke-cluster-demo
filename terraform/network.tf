@@ -3,7 +3,7 @@
 // traffic and SSH access for testing purposes.
 
 resource "google_compute_network" "vpc_network" {
-  depends_on              = [google_project_service.compute-api]
+  depends_on              = [google_project_service.gke-services]
   name                    = "gke-vpc"
   routing_mode            = "REGIONAL"
   auto_create_subnetworks = false
@@ -12,7 +12,7 @@ resource "google_compute_network" "vpc_network" {
 
 resource "google_compute_subnetwork" "subnet" {
   depends_on = [
-    google_project_service.compute-api,
+    google_project_service.gke-services,
     google_compute_network.vpc_network
   ]
   name          = "gke-subnet"
