@@ -13,5 +13,5 @@ variable "region" {
 variable "zone" {
   type        = string
   description = "The GCP zone for the GKE node pool."
-  default     = "us-central1-c"
+  default     = "us-central1-a"
 }
