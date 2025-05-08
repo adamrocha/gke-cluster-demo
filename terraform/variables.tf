@@ -15,3 +15,9 @@ variable "zone" {
   description = "The GCP zone for the GKE node pool."
   default     = "us-central1-a"
 }
+
+variable "environment" {
+  type        = string
+  description = "The environment for the GKE cluster (e.g., dev, staging, prod)."
+  default     = "dev"
+}
