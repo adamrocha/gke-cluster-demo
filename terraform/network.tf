@@ -3,7 +3,7 @@
 // traffic and SSH access for testing purposes.
 
 resource "google_compute_network" "vpc_network" {
-  depends_on              = [google_project_service.compute-api]
+  depends_on              = [google_project_service.api-services]
   name                    = "gke-vpc"
   routing_mode            = "REGIONAL"
   auto_create_subnetworks = false
@@ -12,12 +12,12 @@ resource "google_compute_network" "vpc_network" {
 
 resource "google_compute_subnetwork" "subnet" {
   depends_on = [
-    google_project_service.compute-api,
+    google_project_service.api-services,
     google_compute_network.vpc_network
   ]
   name          = "gke-subnet"
   ip_cidr_range = "10.2.0.0/16"
-  network       = google_compute_network.vpc_network.id
+  network       = google_compute_network.vpc_network.name
   description   = "Subnet for GKE"
 }
 

@@ -1,0 +1,12 @@
+plugin: google.cloud.gcp_compute
+projects:
+  - gke-cluster-458701
+zones:
+  - us-central1-a
+  - us-central1-b
+  - us-central1-c
+  - us-central1-f
+auth_kind: serviceaccount
+service_account_file: /opt/keys/ansible-inventory-key.json
+hostnames:
+  - name

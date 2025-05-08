@@ -1,19 +1,17 @@
 variable "project_id" {
-  type    = string
-  default = "gke-cluster-458610"
+  type        = string
+  description = "The GCP project ID where resources will be created."
+  default     = "gke-cluster-458701"
 }
 
 variable "region" {
-  type    = string
-  default = "us-central1"
+  type        = string
+  description = "The GCP region for the GKE cluster and network resources."
+  default     = "us-central1"
 }
 
 variable "zone" {
-  type    = string
-  default = "us-central1-c"
-}
-
-variable "create_service_account" {
-  type    = bool
-  default = false
+  type        = string
+  description = "The GCP zone for the GKE node pool."
+  default     = "us-central1-a"
 }
