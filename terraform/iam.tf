@@ -25,30 +25,19 @@ resource "google_service_account" "gke_service_account" {
   }
 }
 
-/*
-resource "google_project_iam_member" "gcs_sa_roles" {
-  role = each.key
-  for_each = toset([
-    "roles/storage.admin",
-    "roles/storage.objectAdmin",
-    "roles/storage.objectViewer",
-    "roles/storage.objectCreator",
-    "roles/storage.objectAdmin"
-  ])
-  project = var.project_id
-  member  = "serviceAccount:${google_service_account.gcs_service_account.email}"
+resource "tls_private_key" "gke_ssh" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
 }
-*/
 
-// Optional: Service account (conditionally created)
-// Using a dedicated SA for GKE nodes is a security best practice.
-resource "google_service_account" "gcs_service_account" {
-  account_id   = "gcs-service-account"
-  display_name = "GCS Service Account"
-  description  = "GCS Service Account"
-
-  lifecycle {
-    prevent_destroy = false
+resource "google_secret_manager_secret" "gke_private_key" {
+  secret_id = "gke-private-key"
+  replication {
+    user_managed {
+      replicas {
+        location = "us-central1"
+      }
+    }
   }
 }
 
@@ -73,27 +62,6 @@ resource "google_service_account" "ansible_service_account" {
   account_id   = "ansible-service-account"
   display_name = "Ansible Service Account"
   description  = "Ansible Service Account"
-
-  lifecycle {
-    prevent_destroy = false
-  }
-}
-
-resource "google_storage_bucket_iam_member" "bucket_admin" {
-  depends_on = [
-    google_project_service.api_services,
-    google_service_account.gke_service_account
-  ]
-  role = each.key
-  for_each = toset([
-    "roles/storage.admin",
-    "roles/storage.objectAdmin",
-    "roles/storage.objectViewer",
-    "roles/storage.objectCreator",
-    "roles/storage.objectAdmin"
-  ])
-  bucket = google_storage_bucket.terraform_state.name
-  member = "serviceAccount:${google_service_account.gcs_service_account.email}"
 
   lifecycle {
     prevent_destroy = false
@@ -141,22 +109,9 @@ resource "google_secret_manager_secret" "ansible_key_secret" {
 resource "google_secret_manager_secret_version" "ansible_key_secret-version" {
   secret      = google_secret_manager_secret.ansible_key_secret.id
   secret_data = base64decode(google_service_account_key.ansible_inventory_key.private_key)
-  //secret_data = file("/opt/keys/ansible_inventory_key.json")
-}
 
-resource "tls_private_key" "gke_ssh" {
-  algorithm = "RSA"
-  rsa_bits  = 4096
-}
-
-resource "google_secret_manager_secret" "gke_private_key" {
-  secret_id = "gke-private-key"
-  replication {
-    user_managed {
-      replicas {
-        location = "us-central1"
-      }
-    }
+  lifecycle {
+    prevent_destroy = false
   }
 }
 
