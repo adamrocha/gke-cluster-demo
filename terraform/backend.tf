@@ -10,7 +10,7 @@ resource "google_service_account" "gcs_service_account" {
 resource "google_storage_bucket_iam_member" "bucket_admin" {
   depends_on = [
     google_project_service.api_services,
-    google_service_account.gke_service_account
+    google_service_account.gcs_service_account
   ]
   role = each.key
   for_each = toset([
@@ -39,9 +39,11 @@ resource "google_storage_bucket" "terraform_state" {
   lifecycle {
     prevent_destroy = false
   }
+
   retention_policy {
     //retention_period = 365 * 24 * 60 * 60 // 1 year in seconds
-    retention_period = 7 * 24 * 60 * 60 // 7 days in seconds  
+    //retention_period = 7 * 24 * 60 * 60 // 7 days in seconds
+    retention_period = 60 // 1 minute in seconds
     is_locked        = false
   }
 
@@ -75,12 +77,16 @@ resource "google_storage_bucket" "terraform_state" {
   }
 }
 
-
 resource "google_storage_bucket_object" "folder" {
-  name   = "terraform/state/dev" // Trailing slash simulates a folder
-  bucket = var.terraform_state_bucket
-  source = "/opt/github/gke-cluster/terraform/terraform.tfstate" // Empty object to simulate folder
-
+  depends_on = [google_storage_bucket.terraform_state]
+  name       = "terraform/state/dev" // Trailing slash simulates a folder
+  bucket     = var.terraform_state_bucket
+  source     = "/opt/github/gke-cluster/terraform/terraform.tfstate" // Empty object to simulate folder
+  content_type = "application/json"
+  metadata = {
+    environment = "terraform"
+    purpose     = "state-storage"
+  }
 
   lifecycle {
     prevent_destroy = false
