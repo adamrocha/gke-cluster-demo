@@ -3,7 +3,7 @@
 // traffic and SSH access for testing purposes.
 
 resource "google_compute_network" "vpc_network" {
-  depends_on              = [google_project_service.api-services]
+  depends_on              = [google_project_service.api_services]
   name                    = "gke-vpc"
   routing_mode            = "REGIONAL"
   auto_create_subnetworks = false
@@ -12,7 +12,7 @@ resource "google_compute_network" "vpc_network" {
 
 resource "google_compute_subnetwork" "subnet" {
   depends_on = [
-    google_project_service.api-services,
+    google_project_service.api_services,
     google_compute_network.vpc_network
   ]
   name          = "gke-subnet"
@@ -22,7 +22,7 @@ resource "google_compute_subnetwork" "subnet" {
 }
 
 // Firewall rule to allow internal traffic
-resource "google_compute_firewall" "allow-internal" {
+resource "google_compute_firewall" "allow_internal" {
   depends_on = [google_compute_network.vpc_network]
   name       = "allow-internal"
   network    = google_compute_network.vpc_network.name
@@ -43,7 +43,7 @@ resource "google_compute_firewall" "allow-internal" {
 }
 
 // Firewall rule to allow SSH from anywhere (only for testing!)
-resource "google_compute_firewall" "allow-ssh" {
+resource "google_compute_firewall" "allow_ssh" {
   depends_on = [google_compute_network.vpc_network]
   network    = google_compute_network.vpc_network.name
   name       = "allow-ssh"
