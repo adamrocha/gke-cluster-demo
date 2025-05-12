@@ -46,7 +46,7 @@ resource "google_storage_bucket" "terraform_state" {
     retention_period = 60 // 1 minute in seconds
     is_locked        = false
   }
-/*
+  /*
 Uncomment the above block if you want to set a retention policy
 and lock it. This will prevent deletion of objects for the specified period.
 Be cautious with retention policies as they can lead to data loss if not managed properly.
