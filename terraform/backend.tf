@@ -46,18 +46,16 @@ resource "google_storage_bucket" "terraform_state" {
     retention_period = 60 // 1 minute in seconds
     is_locked        = false
   }
-
-  // Uncomment the above block if you want to set a retention policy
-  // and lock it. This will prevent deletion of objects for the specified period.
-  // Be cautious with retention policies as they can lead to data loss if not managed properly.
-  // You can lock the retention policy by setting is_locked to true.
-  // This will prevent any changes to the retention policy for the specified period.
-  // Make sure to understand the implications of locking a retention policy.
-  // Refer to the GCP documentation for more details on retention policies:
-  // https://cloud.google.com/storage/docs/bucket-lock
-  // https://cloud.google.com/storage/docs/how-to/lock-retention-policy
-  // https://cloud.google.com/storage/docs/how-to/lock-retention-policy#lock-retention-policy
-
+  /*
+Uncomment the above block if you want to set a retention policy
+and lock it. This will prevent deletion of objects for the specified period.
+Be cautious with retention policies as they can lead to data loss if not managed properly.
+You can lock the retention policy by setting is_locked to true.
+This will prevent any changes to the retention policy for the specified period.
+Make sure to understand the implications of locking a retention policy.
+Refer to the GCP documentation for more details on retention policies:
+https://cloud.google.com/storage/docs/bucket-lock
+*/
   versioning {
     enabled = true
   }
@@ -78,10 +76,10 @@ resource "google_storage_bucket" "terraform_state" {
 }
 
 resource "google_storage_bucket_object" "folder" {
-  depends_on = [google_storage_bucket.terraform_state]
-  name       = "terraform/state/dev" // Trailing slash simulates a folder
-  bucket     = var.terraform_state_bucket
-  source     = "/opt/github/gke-cluster/terraform/terraform.tfstate" // Empty object to simulate folder
+  depends_on   = [google_storage_bucket.terraform_state]
+  name         = "terraform/state/dev" // Trailing slash simulates a folder
+  bucket       = var.terraform_state_bucket
+  source       = "/opt/github/gke-cluster/terraform/terraform.tfstate" // Empty object to simulate folder
   content_type = "application/json"
   metadata = {
     environment = "terraform"
@@ -92,7 +90,6 @@ resource "google_storage_bucket_object" "folder" {
     prevent_destroy = false
   }
 }
-
 
 // bucket: Name of your GCS bucket
 // prefix: Optional path (like a folder) for organizing state files

@@ -25,5 +25,5 @@ variable "environment" {
 variable "terraform_state_bucket" {
   type        = string
   description = "The name of the GCS bucket for storing Terraform state."
-  default     = "terraform-state-bucket-123456"
+  default     = "terraform-state-bucket-1337"
 }

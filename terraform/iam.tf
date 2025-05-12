@@ -18,7 +18,6 @@ resource "google_project_iam_member" "gke_sa_roles" {
 resource "google_service_account" "gke_service_account" {
   account_id   = "gke-service-account"
   display_name = "GKE Service Account"
-  description  = "GKE Service Account"
 
   lifecycle {
     prevent_destroy = false
@@ -61,7 +60,6 @@ resource "google_project_iam_member" "ansible_sa_roles" {
 resource "google_service_account" "ansible_service_account" {
   account_id   = "ansible-service-account"
   display_name = "Ansible Service Account"
-  description  = "Ansible Service Account"
 
   lifecycle {
     prevent_destroy = false
@@ -96,7 +94,11 @@ resource "google_service_account_key" "ansible_inventory_key" {
 }
 
 resource "google_secret_manager_secret" "ansible_key_secret" {
-  secret_id = "ansible_inventory_key"
+  depends_on = [
+    google_project_service.api_services,
+    google_service_account.ansible_service_account
+  ]
+  secret_id = "ansible-inventory-key"
   replication {
     user_managed {
       replicas {

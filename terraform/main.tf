@@ -2,7 +2,9 @@ resource "google_project_service" "api_services" {
   for_each = toset([
     "compute.googleapis.com",
     "container.googleapis.com",
-    "secretmanager.googleapis.com"
+    "secretmanager.googleapis.com",
+    "networkmanagement.googleapis.com",
+    "logging.googleapis.com"
   ])
   project                    = var.project_id
   service                    = each.key
