@@ -94,6 +94,10 @@ resource "google_service_account_key" "ansible_inventory_key" {
 }
 
 resource "google_secret_manager_secret" "ansible_key_secret" {
+  depends_on = [
+    google_project_service.api_services,
+    google_service_account.ansible_service_account
+  ]
   secret_id = "ansible-inventory-key"
   replication {
     user_managed {
