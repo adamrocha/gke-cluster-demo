@@ -6,7 +6,10 @@ resource "google_project_iam_member" "gke_sa_roles" {
     "roles/container.developer",
     "roles/container.serviceAgent",
     "roles/container.viewer",
-    "roles/container.hostServiceAgentUser"
+    "roles/container.hostServiceAgentUser",
+    "roles/storage.objectViewer",
+    "roles/storage.objectAdmin",
+    "roles/artifactregistry.reader"
   ])
   project = var.project_id
   role    = each.key
