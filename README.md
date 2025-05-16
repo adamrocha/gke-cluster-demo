@@ -1,2 +1,2 @@
 # gke-cluster
-Terraform GKE cluster deployment and testing
+GKE deployment demo
