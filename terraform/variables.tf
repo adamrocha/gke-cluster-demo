@@ -27,3 +27,9 @@ variable "terraform_state_bucket" {
   description = "The name of the GCS bucket for storing Terraform state."
   default     = "terraform-state-bucket-1337"
 }
+
+variable "kubernetes_image" {
+  type        = string
+  description = "The Docker image for the Kubernetes deployment."
+  default     = "gcr.io/gke-cluster-458701/hello-world:v1"
+}
