@@ -1,2 +1,2 @@
 # gke-cluster
-gke cluster deplopyed with Terraform
+GKE deployment demo
