@@ -31,5 +31,5 @@ variable "terraform_state_bucket" {
 variable "kubernetes_image" {
   type        = string
   description = "The Docker image for the Kubernetes deployment."
-  default     = "gcr.io/gke-cluster-458701/hello-world:v1"
+  default     = "gcr.io/gke-cluster-458701/hello-world:1.0.0"
 }
