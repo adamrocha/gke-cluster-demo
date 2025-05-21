@@ -6,6 +6,20 @@ PROJECT_ID="gke-cluster-458701"
 IMAGE_NAME="hello-world"
 IMAGE_TAG="1.0.0"
 
+cd ../kubernetes/ || exit 1
+
+# Check if Docker is installed
+if ! command -v docker &> /dev/null; then
+  echo "❌ Docker is not installed. Please install Docker to proceed."
+  exit 1
+fi
+
+# Check if Docker Buildx is installed
+if ! docker buildx version &> /dev/null; then
+  echo "❌ Docker Buildx is not installed. Please install Docker Buildx to proceed."
+  exit 1
+fi
+
 # Full image path
 IMAGE_PATH="gcr.io/${PROJECT_ID}/${IMAGE_NAME}"
 

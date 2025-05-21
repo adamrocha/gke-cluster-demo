@@ -18,3 +18,22 @@ locals {
     "container.googleapis.com"
   ]
 }
+
+resource "null_resource" "configure_kubectl" {
+  depends_on = [google_container_cluster.gke_cluster]
+  provisioner "local-exec" {
+    command     = <<EOF
+    gcloud container clusters get-credentials ${google_container_cluster.gke_cluster.name} \
+    --region=${var.region} \
+    --project=${var.project_id}
+    EOF
+    interpreter = ["bash", "-c"]
+  }
+}
+
+resource "null_resource" "image_build" {
+  provisioner "local-exec" {
+    command     = "/opt/github/gke-cluster/scripts/image.sh"
+    interpreter = ["bash", "-c"]
+  }
+}

@@ -13,11 +13,13 @@ resource "google_project_service" "api_services" {
 }
 
 data "google_client_config" "default" {}
+
 /*
 resource "google_container_cluster" "primary" {
   name = google_container_cluster.gke_cluster.name
 }
 */
+
 resource "google_container_cluster" "gke_cluster" {
   # checkov:skip=CKV_GCP_20: No CIDR block for master authorized networks
   # checkov:skip=CKV_GCP_61: conflicts with enable_autopilot
@@ -29,7 +31,6 @@ resource "google_container_cluster" "gke_cluster" {
   initial_node_count  = 1
   enable_autopilot    = true
   //remove_default_node_pool = true
-
 
   # Add cluster-level labels
   resource_labels = {
@@ -65,16 +66,6 @@ resource "google_container_cluster" "gke_cluster" {
   # Enable GKE Metadata Server
   workload_identity_config {
     workload_pool = "${var.project_id}.svc.id.goog"
-  }
-
-  provisioner "local-exec" {
-    command     = "mkdir -p /opt/keys"
-    interpreter = ["bash", "-c"]
-  }
-
-  provisioner "local-exec" {
-    command     = "/opt/github/gke-cluster/scripts/image.sh"
-    interpreter = ["bash", "-c"]
   }
 
   # Disable client certificate authentication
@@ -181,7 +172,7 @@ resource "kubernetes_deployment" "hello_world" {
 
         container {
           name              = "hello-world"
-          image             = "gcr.io/gke-cluster-458701/hello-world:1.0.0@sha256:a25f725fdbe5223aed5a3cb6476aa6ac76297efdd45d953762dc6acd8b465f05"
+          image             = "gcr.io/gke-cluster-458701/hello-world:1.0.0@sha256:1eb501d45bf85b69c6e235c70db971872d82d956a8cd0ab875002894270ff65b"
           image_pull_policy = "Always"
 
           port {
@@ -220,6 +211,7 @@ resource "kubernetes_deployment" "hello_world" {
     }
   }
 }
+
 
 resource "kubernetes_namespace" "hello_world_ns" {
   metadata {
