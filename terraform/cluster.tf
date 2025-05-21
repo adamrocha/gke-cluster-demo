@@ -13,28 +13,74 @@ resource "google_project_service" "api_services" {
 }
 
 data "google_client_config" "default" {}
-
-data "google_container_cluster" "primary" {
+/*
+resource "google_container_cluster" "primary" {
   name = google_container_cluster.gke_cluster.name
 }
-
+*/
 resource "google_container_cluster" "gke_cluster" {
-  depends_on = [
-    google_project_service.api_services,
-    google_service_account.gke_service_account,
-    google_project_iam_member.gke_sa_roles
-  ]
-  name             = "gke-cluster"
-  enable_autopilot = true
-  network          = google_compute_network.gke_vpc.name
-  subnetwork       = google_compute_subnetwork.gke_subnet.name
-  //remove_default_node_pool = true
-  initial_node_count  = 1
+  # checkov:skip=CKV_GCP_20: No CIDR block for master authorized networks
+  # checkov:skip=CKV_GCP_61: conflicts with enable_autopilot
+  depends_on          = [google_project_service.api_services]
+  name                = "gke-cluster"
+  network             = google_compute_network.gke_vpc.name
+  subnetwork          = google_compute_subnetwork.gke_subnet.name
   deletion_protection = false
+  initial_node_count  = 1
+  enable_autopilot    = true
+  //remove_default_node_pool = true
 
+
+  # Add cluster-level labels
+  resource_labels = {
+    env   = "dev"
+    owner = "dev"
+  }
+
+  # Set the release channel
+  release_channel {
+    channel = "REGULAR"
+  }
+
+  # Enable Binary Authorization
+  binary_authorization {
+    evaluation_mode = "PROJECT_SINGLETON_POLICY_ENFORCE"
+  }
+
+  # Enable private cluster and private nodes
+  private_cluster_config {
+    enable_private_nodes    = true
+    enable_private_endpoint = false
+    master_ipv4_cidr_block  = "172.16.0.0/28" # Restrict to an internal IP range
+  }
+  /*
+  # Enable master authorized networks (restrict to trusted CIDR, e.g., office IP or VPN)
+  master_authorized_networks_config {
+    cidr_blocks {
+      cidr_block   = []
+      display_name = "Trusted Network"
+    }
+  }
+  */
+  # Enable GKE Metadata Server
+  workload_identity_config {
+    workload_pool = "${var.project_id}.svc.id.goog"
+  }
+
+  provisioner "local-exec" {
+    command     = "mkdir -p /opt/keys"
+    interpreter = ["bash", "-c"]
+  }
+
+  provisioner "local-exec" {
+    command     = "/opt/github/gke-cluster/scripts/image.sh"
+    interpreter = ["bash", "-c"]
+  }
+
+  # Disable client certificate authentication
   master_auth {
     client_certificate_config {
-      issue_client_certificate = true
+      issue_client_certificate = false
     }
   }
 
@@ -46,60 +92,34 @@ resource "google_container_cluster" "gke_cluster" {
 
   node_config {
     service_account = google_service_account.gke_service_account.email
-    preemptible     = true
+    // preemptible     = true
     labels = {
       env = "dev"
     }
     oauth_scopes = [
       "https://www.googleapis.com/auth/cloud-platform"
     ]
-  }
-}
-/*
-resource "google_container_node_pool" "gke_pool" {
-  depends_on = [
-    google_project_service.api_services,
-    google_service_account.gke_service_account
-  ]
-  name               = "gke-pool"
-  cluster            = google_container_cluster.gke_cluster.name
-  initial_node_count = 1
 
-  autoscaling {
-    min_node_count = 1
-    max_node_count = 4
-  }
+    # Enable Shielded GKE Nodes with Secure Boot
+    shielded_instance_config {
+      enable_secure_boot          = true
+      enable_integrity_monitoring = true
+    }
 
-  node_config {
-    service_account = google_service_account.gke_service_account.email
-    preemptible     = true
-    //machine_type    = "e2-micro"
-    machine_type = "e2-medium"
-    disk_type    = "pd-standard"
-    disk_size_gb = 50
-    oauth_scopes = ["https://www.googleapis.com/auth/cloud-platform"]
+    # Enable GKE Metadata Server
     metadata = {
-      ssh-keys = "gke-user:${tls_private_key.gke_ssh.public_key_openssh}"
+      "disable-legacy-endpoints" = "true"
+      "gke-metadata-server"      = "enabled"
     }
-    tags = ["gke-node"]
-    labels = {
-      env = "dev"
-    }
-  }
-
-  management {
-    auto_repair  = true
-    auto_upgrade = true
   }
 }
-*/
 
 resource "kubernetes_service" "hello_world_service" {
-  depends_on = [data.google_container_cluster.primary]
-  //  depends_on = [google_container_node_pool.gke_pool]
+  depends_on = []
 
   metadata {
-    name = "hello-world-service"
+    name      = "hello-world-service"
+    namespace = "hello-world-ns"
     labels = {
       app = "hello-world"
     }
@@ -124,11 +144,11 @@ resource "kubernetes_service" "hello_world_service" {
   }
 }
 
-
 resource "kubernetes_deployment" "hello_world" {
-  depends_on = [kubernetes_service.hello_world_service]
+  depends_on = []
   metadata {
-    name = "hello-world"
+    name      = "hello-world"
+    namespace = "hello-world-ns"
     labels = {
       app = "hello-world"
     }
@@ -151,13 +171,40 @@ resource "kubernetes_deployment" "hello_world" {
       }
 
       spec {
+        /*
+        security_context {
+          run_as_non_root = true
+          run_as_user     = 1000
+          fs_group        = 2000
+        }
+        */
+
         container {
-          name  = "hello-world"
-          image = var.kubernetes_image
+          name              = "hello-world"
+          image             = "gcr.io/gke-cluster-458701/hello-world:1.0.0@sha256:a25f725fdbe5223aed5a3cb6476aa6ac76297efdd45d953762dc6acd8b465f05"
+          image_pull_policy = "Always"
 
           port {
             container_port = 80
           }
+
+          readiness_probe {
+            http_get {
+              path = "/"
+              port = 80
+            }
+            initial_delay_seconds = 5
+          }
+
+          liveness_probe {
+            http_get {
+              path = "/"
+              port = 80
+            }
+            initial_delay_seconds = 5
+            period_seconds        = 10
+          }
+
           resources {
             limits = {
               cpu    = "500m"
@@ -173,3 +220,49 @@ resource "kubernetes_deployment" "hello_world" {
     }
   }
 }
+
+resource "kubernetes_namespace" "hello_world_ns" {
+  metadata {
+    name = "hello-world-ns"
+  }
+}
+
+
+/*
+resource "google_container_node_pool" "gke_pool" {
+  depends_on = [
+    google_project_service.api_services,
+    google_service_account.gke_service_account
+  ]
+  name               = "gke-pool"
+  cluster            = google_container_cluster.gke_cluster.name
+  initial_node_count = 1
+
+  autoscaling {
+    min_node_count = 1
+    max_node_count = 4
+  }
+
+  node_config {
+    service_account = google_service_account.gke_service_account.email
+    preemptible     = true
+    //machine_type    = "e2-medium"
+    machine_type = "e2-micro"
+    disk_type    = "pd-standard"
+    disk_size_gb = 50
+    oauth_scopes = ["https://www.googleapis.com/auth/cloud-platform"]
+    metadata = {
+      ssh-keys = "gke-user:${tls_private_key.gke_ssh.public_key_openssh}"
+    }
+    tags = ["gke-node"]
+    labels = {
+      env = "dev"
+    }
+  }
+
+  management {
+    auto_repair  = true
+    auto_upgrade = true
+  }
+}
+*/
