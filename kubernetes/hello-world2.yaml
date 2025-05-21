@@ -18,6 +18,14 @@ spec:
           image: gcr.io/YOUR_PROJECT_ID/hello-world:1.0.0
           ports:
             - containerPort: 80
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+
 ---
 apiVersion: v1
 kind: Service
