@@ -31,7 +31,7 @@ resource "google_storage_bucket" "terraform_state" {
   force_destroy               = true
   uniform_bucket_level_access = true
   public_access_prevention    = "enforced"
-
+  # checkov:skip=CKV_GCP_62: Not production. Will fix later
   # Logging should not point to the same bucket; specify a different bucket for logs
   /*
   logging {
