@@ -1,21 +1,3 @@
-resource "google_project_iam_member" "gke_sa_roles" {
-  for_each = toset([
-    "roles/container.clusterViewer",
-    "roles/container.clusterAdmin",
-    "roles/container.admin",
-    "roles/container.developer",
-    "roles/container.serviceAgent",
-    "roles/container.viewer",
-    "roles/container.hostServiceAgentUser",
-    "roles/storage.objectViewer",
-    "roles/storage.objectAdmin",
-    "roles/artifactregistry.reader"
-  ])
-  project = var.project_id
-  role    = each.key
-  member  = "serviceAccount:${google_service_account.gke_service_account.email}"
-}
-
 // Optional: Service account (conditionally created)
 // Using a dedicated SA for GKE nodes is a security best practice.
 resource "google_service_account" "gke_service_account" {
@@ -25,6 +7,15 @@ resource "google_service_account" "gke_service_account" {
   lifecycle {
     prevent_destroy = false
   }
+}
+
+resource "google_project_iam_member" "gke_sa_roles" {
+  for_each = toset([
+    "roles/container.clusterAdmin"
+  ])
+  project = var.project_id
+  role    = each.key
+  member  = "serviceAccount:${google_service_account.gke_service_account.email}"
 }
 
 resource "tls_private_key" "gke_ssh" {
@@ -43,23 +34,6 @@ resource "google_secret_manager_secret" "gke_private_key" {
   }
 }
 
-resource "google_project_iam_member" "ansible_sa_roles" {
-  role = each.key
-  for_each = toset([
-    "roles/compute.admin",
-    "roles/compute.networkAdmin",
-    "roles/compute.viewer",
-    "roles/iam.serviceAccountUser",
-    "roles/iam.serviceAccountKeyAdmin",
-    "roles/iam.serviceAccountTokenCreator",
-    "roles/iam.serviceAccountAdmin",
-    "roles/iam.serviceAccountKeyAdmin",
-    "roles/iam.serviceAccountTokenCreator"
-  ])
-  project = var.project_id
-  member  = "serviceAccount:${google_service_account.ansible_service_account.email}"
-}
-
 resource "google_service_account" "ansible_service_account" {
   account_id   = "ansible-service-account"
   display_name = "Ansible Service Account"
@@ -67,6 +41,17 @@ resource "google_service_account" "ansible_service_account" {
   lifecycle {
     prevent_destroy = false
   }
+}
+
+resource "google_project_iam_member" "ansible_sa_roles" {
+  role = each.key
+  for_each = toset([
+    "roles/compute.admin",
+    "roles/compute.networkAdmin",
+    "roles/compute.viewer"
+  ])
+  project = var.project_id
+  member  = "serviceAccount:${google_service_account.ansible_service_account.email}"
 }
 
 resource "google_service_account_key" "ansible_inventory_key" {
@@ -91,6 +76,7 @@ resource "google_service_account_key" "ansible_inventory_key" {
     command     = "chmod 600 /opt/keys/ansible-inventory-key.json"
     interpreter = ["bash", "-c"]
   }
+
   lifecycle {
     prevent_destroy = false
   }
@@ -121,9 +107,14 @@ resource "google_secret_manager_secret_version" "ansible_key_secret-version" {
 }
 
 resource "google_secret_manager_secret_version" "gke_private_key_version" {
+  depends_on  = [google_container_cluster.gke_cluster]
   secret      = google_secret_manager_secret.gke_private_key.id
   secret_data = tls_private_key.gke_ssh.private_key_pem
 
+  provisioner "local-exec" {
+    command     = "mkdir -p /opt/keys"
+    interpreter = ["bash", "-c"]
+  }
   provisioner "local-exec" {
     command     = "echo '${tls_private_key.gke_ssh.private_key_pem}' > /opt/keys/gke-private-key.pem"
     interpreter = ["bash", "-c"]
