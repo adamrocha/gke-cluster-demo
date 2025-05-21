@@ -8,17 +8,13 @@ resource "google_service_account" "gcs_service_account" {
 }
 
 resource "google_storage_bucket_iam_member" "bucket_admin" {
-  depends_on = [
-    google_project_service.api_services,
-    google_service_account.gcs_service_account
-  ]
-  role = each.key
+  depends_on = [google_project_service.api_services]
+  role       = each.key
   for_each = toset([
-    "roles/storage.admin",
-    "roles/storage.objectAdmin",
-    "roles/storage.objectViewer",
-    "roles/storage.objectCreator",
-    "roles/storage.objectAdmin"
+    //"roles/storage.admin",
+    //"roles/storage.objectAdmin",
+    //"roles/storage.objectCreator",
+    //"roles/storage.objectViewer"
   ])
   bucket = var.terraform_state_bucket
   member = "serviceAccount:${google_service_account.gcs_service_account.email}"
@@ -36,6 +32,13 @@ resource "google_storage_bucket" "terraform_state" {
   uniform_bucket_level_access = true
   public_access_prevention    = "enforced"
 
+  # Logging should not point to the same bucket; specify a different bucket for logs
+  /*
+  logging {
+    log_bucket        = google_logging_project_bucket_config.log_analytics_bucket.name
+    log_object_prefix = "logs/"
+  }
+  */
   lifecycle {
     prevent_destroy = false
   }
@@ -46,16 +49,17 @@ resource "google_storage_bucket" "terraform_state" {
     retention_period = 60 // 1 minute in seconds
     is_locked        = false
   }
+
   /*
-Uncomment the above block if you want to set a retention policy
-and lock it. This will prevent deletion of objects for the specified period.
-Be cautious with retention policies as they can lead to data loss if not managed properly.
-You can lock the retention policy by setting is_locked to true.
-This will prevent any changes to the retention policy for the specified period.
-Make sure to understand the implications of locking a retention policy.
-Refer to the GCP documentation for more details on retention policies:
-https://cloud.google.com/storage/docs/bucket-lock
-*/
+  Uncomment the above block if you want to set a retention policy
+  and lock it. This will prevent deletion of objects for the specified period.
+  Be cautious with retention policies as they can lead to data loss if not managed properly.
+  You can lock the retention policy by setting is_locked to true.
+  This will prevent any changes to the retention policy for the specified period.
+  Make sure to understand the implications of locking a retention policy.
+  Refer to the GCP documentation for more details on retention policies:
+  https://cloud.google.com/storage/docs/bucket-lock
+  */
   versioning {
     enabled = true
   }
@@ -97,7 +101,7 @@ resource "google_storage_bucket_object" "folder" {
 /*
 terraform {
   backend "gcs" {
-    bucket = "terraform-state-bucket-123456"
+    bucket = "terraform-state-bucket-1337"
     prefix = "terraform/state/dev"
   }
 }
