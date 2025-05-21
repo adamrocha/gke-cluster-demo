@@ -16,12 +16,12 @@ resource "google_compute_subnetwork" "gke_subnet" {
 
   secondary_ip_range {
     range_name    = "services-range"
-    ip_cidr_range = "192.168.0.0/24"
+    ip_cidr_range = "192.168.0.0/16"
   }
 
   secondary_ip_range {
     range_name    = "pod-ranges"
-    ip_cidr_range = "192.168.1.0/24"
+    ip_cidr_range = "192.169.0.0/16"
   }
 
   log_config {
@@ -63,7 +63,8 @@ resource "google_compute_firewall" "allow_ssh" {
     protocol = "tcp"
     ports    = ["22"]
   }
-  source_ranges = ["0.0.0.0/0"]
+  # Replace the IP below with your trusted IP or CIDR range
+  source_ranges = []
   direction     = "INGRESS"
   priority      = 1000
 }
