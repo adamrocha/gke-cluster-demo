@@ -33,3 +33,9 @@ variable "kubernetes_image" {
   description = "The Docker image for the Kubernetes deployment."
   default     = "gcr.io/gke-cluster-458701/hello-world:1.0.0@sha256:a25f725fdbe5223aed5a3cb6476aa6ac76297efdd45d953762dc6acd8b465f05"
 }
+
+variable "kubeconfig_path" {
+  type        = string
+  description = "The path to the kubeconfig file for accessing the GKE cluster."
+  default     = "~/.kube/config"
+}
