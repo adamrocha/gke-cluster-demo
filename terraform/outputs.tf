@@ -20,6 +20,10 @@ output "gke_cluster_endpoint" {
   description = "hello-world endpoint"
 }
 
+output "gke_service_account" {
+  value = google_container_cluster.gke_cluster.node_config[0].service_account
+}
+
 output "load_balancer_ip" {
   value       = kubernetes_service.hello_world_service.status[0].load_balancer[0].ingress[0].ip
   description = "External IP of the hello-world service"
