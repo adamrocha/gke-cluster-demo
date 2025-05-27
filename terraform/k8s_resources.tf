@@ -1,10 +1,15 @@
 resource "kubernetes_namespace" "hello_world_ns" {
+  depends_on = [
+    google_container_cluster.gke_cluster,
+    google_container_node_pool.gke_pool
+  ]
   metadata {
     name = "hello-world-ns"
   }
 }
 
 resource "kubernetes_service" "hello_world_service" {
+  depends_on = [kubernetes_namespace.hello_world_ns]
   metadata {
     name      = "hello-world-service"
     namespace = kubernetes_namespace.hello_world_ns.metadata[0].name
@@ -32,6 +37,7 @@ resource "kubernetes_service" "hello_world_service" {
 }
 
 resource "kubernetes_deployment" "hello_world" {
+  depends_on = [kubernetes_namespace.hello_world_ns]
   metadata {
     name      = "hello-world"
     namespace = kubernetes_namespace.hello_world_ns.metadata[0].name
@@ -41,17 +47,7 @@ resource "kubernetes_deployment" "hello_world" {
   }
 
   spec {
-    replicas                  = 2
-    revision_history_limit    = 10
-    min_ready_seconds         = 5
-    progress_deadline_seconds = 600
-    strategy {
-      type = "RollingUpdate"
-      rolling_update {
-        max_surge       = "25%"
-        max_unavailable = "25%"
-      }
-    }
+    replicas = 2
 
     selector {
       match_labels = {
