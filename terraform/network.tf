@@ -33,9 +33,8 @@ resource "google_compute_subnetwork" "gke_subnet" {
 
 // Firewall rule to allow internal traffic
 resource "google_compute_firewall" "allow_internal" {
-  depends_on = []
-  name       = "allow-internal"
-  network    = google_compute_network.gke_vpc.name
+  name    = "allow-internal"
+  network = google_compute_network.gke_vpc.name
 
   allow {
     protocol = "icmp"
@@ -55,16 +54,15 @@ resource "google_compute_firewall" "allow_internal" {
 
 // Firewall rule to allow SSH from anywhere (only for testing!)
 resource "google_compute_firewall" "allow_ssh" {
-  depends_on = []
-  name       = "allow-ssh"
-  network    = google_compute_network.gke_vpc.name
+  name    = "allow-ssh"
+  network = google_compute_network.gke_vpc.name
 
   allow {
     protocol = "tcp"
     ports    = ["22"]
   }
   # Replace the IP below with your trusted IP or CIDR range
-  source_ranges = []
+  source_ranges = ["0.0.0.0/0"] # Allow SSH from anywhere (not recommended for production)
   direction     = "INGRESS"
   priority      = 1000
 }

@@ -21,6 +21,13 @@ locals {
 
 resource "null_resource" "configure_kubectl" {
   depends_on = [google_container_cluster.gke_cluster]
+
+  triggers = {
+    cluster_name = google_container_cluster.gke_cluster.name
+    endpoint     = google_container_cluster.gke_cluster.endpoint
+    master_auth  = sha1(jsonencode(google_container_cluster.gke_cluster.master_auth))
+  }
+
   provisioner "local-exec" {
     command     = <<EOF
     gcloud container clusters get-credentials ${google_container_cluster.gke_cluster.name} \

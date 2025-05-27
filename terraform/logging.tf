@@ -19,7 +19,7 @@ resource "google_logging_project_sink" "route_to_log_analytics" {
   unique_writer_identity = true
 
   depends_on = [
-    google_logging_project_bucket_config.log_analytics_bucket,
-    google_project_service.api_services
+    google_project_service.api_services,
+    google_logging_project_bucket_config.log_analytics_bucket
   ]
 }
