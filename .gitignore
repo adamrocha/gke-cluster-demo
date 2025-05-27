@@ -1,8 +1,8 @@
 # .terraform
 .terraform/
-**/.terraform/*
-*.tfstate
-*.tfstate.*
+#**/.terraform/*
+#*.tfstate
+*.tfstate*
 crash.log
 crash.*.log
 .terraform.lock.hcl
@@ -13,3 +13,6 @@ crash.*.log
 # Kubernetes
 *-join-command
 *.log
+
+# .vscode
+.vscode/
