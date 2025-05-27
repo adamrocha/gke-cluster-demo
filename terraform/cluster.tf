@@ -53,10 +53,7 @@ resource "google_container_cluster" "gke_cluster" {
 }
 
 resource "google_container_node_pool" "gke_pool" {
-  depends_on = [
-    google_project_service.api_services,
-    google_service_account.gke_service_account
-  ]
+  depends_on         = [google_container_cluster.gke_cluster]
   name               = "demo-pool"
   cluster            = google_container_cluster.gke_cluster.name
   initial_node_count = 1
