@@ -14,7 +14,6 @@ resource "kubernetes_service" "hello_world_service" {
 
     annotations = {
       "cloud.google.com/load-balancer-type" = "External"
-      //"cloud.google.com/backend-config"     = "gke-backend-config"
     }
   }
 
