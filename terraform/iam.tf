@@ -1,5 +1,17 @@
-// Optional: Service account (conditionally created)
-// Using a dedicated SA for GKE nodes is a security best practice.
+resource "google_project_service" "api_services" {
+  for_each = toset([
+    "compute.googleapis.com",
+    "container.googleapis.com",
+    "secretmanager.googleapis.com",
+    "networkmanagement.googleapis.com",
+    "logging.googleapis.com"
+  ])
+  project                    = var.project_id
+  service                    = each.key
+  disable_on_destroy         = false
+  disable_dependent_services = false
+}
+
 resource "google_service_account" "gke_service_account" {
   account_id   = "gke-service-account"
   display_name = "GKE Service Account"
@@ -109,7 +121,6 @@ resource "google_secret_manager_secret_version" "ansible_key_secret-version" {
 }
 
 resource "google_secret_manager_secret_version" "gke_private_key_version" {
-  depends_on  = [google_container_cluster.gke_cluster]
   secret      = google_secret_manager_secret.gke_private_key.id
   secret_data = tls_private_key.gke_ssh.private_key_pem
 
