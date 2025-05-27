@@ -19,12 +19,13 @@ USER appuser
 
 # Start nginx in foreground
 CMD ["nginx", "-g", "daemon off;"]
+
 # Expose port 80
 EXPOSE 80
-# Expose port 443 for HTTPS (if needed)
-EXPOSE 443
+
 # Set the working directory
 WORKDIR /usr/share/nginx/html
+
 # Copy additional configuration files if needed
 # COPY nginx.conf /etc/nginx/nginx.conf
 # Copy SSL certificates if needed
