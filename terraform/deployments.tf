@@ -59,7 +59,7 @@ resource "kubernetes_deployment" "hello_world" {
     }
     revision_history_limit    = 10
     min_ready_seconds         = 5
-    progress_deadline_seconds = 210
+    progress_deadline_seconds = 180
 
     selector {
       match_labels = {
@@ -82,14 +82,24 @@ resource "kubernetes_deployment" "hello_world" {
 
         container {
           name              = "hello-world"
-          image             = "gcr.io/gke-cluster-458701/hello-world:1.2.0"
+          image             = "gcr.io/gke-cluster-458701/hello-world@sha256:7b8ff6260e91e35964aa729c9aa2765066c85e03ccd6a2f500140b381f351935"
           image_pull_policy = "Always"
+
+          volume_mount {
+            name       = "nginx-cache"
+            mount_path = "/var/cache/nginx"
+          }
+
+          volume_mount {
+            name       = "nginx-run"
+            mount_path = "/var/run"
+          }
 
           security_context {
             run_as_non_root            = true
             run_as_user                = 1000
             allow_privilege_escalation = false
-            read_only_root_filesystem  = false
+            read_only_root_filesystem  = true
           }
 
           port {
@@ -124,7 +134,17 @@ resource "kubernetes_deployment" "hello_world" {
             }
           }
         }
-      }
+
+        volume {
+          name = "nginx-cache"
+          empty_dir {}
+        }
+
+        volume {
+          name = "nginx-run"
+          empty_dir {}
+        }
+      }  
     }
   }
 }
