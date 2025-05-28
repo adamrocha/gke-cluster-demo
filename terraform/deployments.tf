@@ -100,6 +100,9 @@ resource "kubernetes_deployment" "hello_world" {
             run_as_user                = 1000
             allow_privilege_escalation = false
             read_only_root_filesystem  = true
+            capabilities {
+              drop = ["NET_RAW"]
+            }
           }
 
           port {
