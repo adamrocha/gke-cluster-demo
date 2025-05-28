@@ -1,45 +1,33 @@
 FROM nginx:alpine
 
 # Create a non-root user and group
-RUN addgroup -g 1000 appgroup && \
-    adduser -D -u 1000 -G appgroup appuser
+RUN addgroup -S -g 1000 appgroup && \
+    adduser -S -u 1000 -G appgroup appuser
 
-# Prepare necessary directories and fix permissions
-RUN mkdir -p /var/cache/nginx /var/run /run /usr/share/nginx/html && \
-    chown -R appuser:appgroup /var/cache/nginx /var/run /run /usr/share/nginx/html
+# Prepare necessary directories
+RUN mkdir -p /var/cache/nginx /var/run /run /usr/share/nginx/html
 
-# Copy static content
-COPY index.html /usr/share/nginx/html/index.html
+# Copy static content and config
+COPY --chown=1000:1000 index.html /usr/share/nginx/html/index.html
+COPY --chown=1000:1000 nginx.conf /etc/nginx/nginx.conf
 
-# Health check for basic uptime monitoring
-HEALTHCHECK --interval=5m --timeout=3s CMD curl -f http://localhost/ || exit 1
+# Set correct permissions
+RUN chown -R 1000:1000 /var/cache/nginx /var/run /run /usr/share/nginx/html
+
+# Health check
+HEALTHCHECK --interval=5m --timeout=3s CMD curl -f http://localhost:8080/ || exit 1
 
 # Run as non-root user
-USER appuser
+USER 1000:1000
 
-# Start nginx in foreground
-CMD ["nginx", "-g", "daemon off;"]
+# Expose non-privileged port
+EXPOSE 8080
 
-# Expose port 80
-EXPOSE 80
-
-# Set the working directory
+# Set working directory
 WORKDIR /usr/share/nginx/html
 
-# Copy additional configuration files if needed
-# COPY nginx.conf /etc/nginx/nginx.conf
-# Copy SSL certificates if needed
-# COPY cert.pem /etc/ssl/certs/cert.pem
-# COPY key.pem /etc/ssl/private/key.pem
-# Optionally, you can add a custom configuration file
-# COPY custom.conf /etc/nginx/conf.d/custom.conf
-# Optionally, you can add a custom index.html file
-# COPY custom_index.html /usr/share/nginx/html/index.html
-# Optionally, you can add a custom error page
-# COPY custom_404.html /usr/share/nginx/html/404.html
-# Optionally, you can add a custom favicon
-# COPY favicon.ico /usr/share/nginx/html/favicon.ico
-# Optionally, you can add a custom robots.txt file
-# COPY robots.txt /usr/share/nginx/html/robots.txt
-# Optionally, you can add a custom sitemap.xml file
-# COPY sitemap.xml /usr/share/nginx/html/sitemap.xml        
+# Disable default entrypoint
+ENTRYPOINT []
+
+# Start nginx with custom config
+CMD ["nginx", "-g", "daemon off;", "-c", "/etc/nginx/nginx.conf"]
