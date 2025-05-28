@@ -30,8 +30,10 @@ resource "kubernetes_service" "hello_world_service" {
     type = "LoadBalancer"
 
     port {
+      name        = "http"
+      protocol    = "TCP"
       port        = 80
-      target_port = 80
+      target_port = 8080
     }
   }
 }
@@ -57,7 +59,7 @@ resource "kubernetes_deployment" "hello_world" {
     }
     revision_history_limit    = 10
     min_ready_seconds         = 5
-    progress_deadline_seconds = 120
+    progress_deadline_seconds = 210
 
     selector {
       match_labels = {
@@ -74,20 +76,19 @@ resource "kubernetes_deployment" "hello_world" {
 
       spec {
         security_context {
-          run_as_non_root = false
+          run_as_non_root = true
+          run_as_user     = 1000
         }
 
         container {
-          name = "hello-world"
-          //image             = "gcr.io/gke-cluster-458701/hello-world:1.0.0@sha256:1eb501d45bf85b69c6e235c70db971872d82d956a8cd0ab875002894270ff65b"
-          image             = "gcr.io/gke-cluster-458701/hello-world:1.1.3@sha256:61642948bd3df265018c1fa3b256ac9ab2ae1c7f808611e534b18391137616d7"
+          name              = "hello-world"
+          image             = "gcr.io/gke-cluster-458701/hello-world:1.2.0"
           image_pull_policy = "Always"
 
           security_context {
-            allow_privilege_escalation = true
-            run_as_non_root            = false
-            run_as_user                = 0
-            run_as_group               = 0
+            run_as_non_root            = true
+            run_as_user                = 1000
+            allow_privilege_escalation = false
             read_only_root_filesystem  = false
           }
 
@@ -98,7 +99,7 @@ resource "kubernetes_deployment" "hello_world" {
           readiness_probe {
             http_get {
               path = "/"
-              port = 80
+              port = 8080
             }
             initial_delay_seconds = 5
           }
@@ -106,7 +107,7 @@ resource "kubernetes_deployment" "hello_world" {
           liveness_probe {
             http_get {
               path = "/"
-              port = 80
+              port = 8080
             }
             initial_delay_seconds = 5
             period_seconds        = 10
