@@ -147,7 +147,7 @@ resource "kubernetes_deployment" "hello_world" {
           name = "nginx-run"
           empty_dir {}
         }
-      }  
+      }
     }
   }
 }
