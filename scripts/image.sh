@@ -4,7 +4,7 @@
 # Required inputs
 PROJECT_ID="gke-cluster-458701"
 IMAGE_NAME="hello-world"
-IMAGE_TAG="1.1.4"
+IMAGE_TAG="1.2.0"
 
 cd ../kubernetes/ || exit 1
 
