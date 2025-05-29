@@ -52,9 +52,10 @@ resource "google_compute_firewall" "allow_internal" {
   priority      = 65534
 }
 
-// Firewall rule to allow SSH from anywhere (only for testing!)
 resource "google_compute_firewall" "allow_ssh" {
+  # checkov:skip=CKV_GCP_2: For dev prurposes only, not recommended for production
   name    = "allow-ssh"
+  description = "Allow SSH from anywhere"
   network = google_compute_network.gke_vpc.name
 
   allow {
@@ -62,7 +63,7 @@ resource "google_compute_firewall" "allow_ssh" {
     ports    = ["22"]
   }
   # Replace the IP below with your trusted IP or CIDR range
-  source_ranges = ["0.0.0.0/0"] # Allow SSH from anywhere (not recommended for production)
+  source_ranges = ["0.0.0.0/0"]
   direction     = "INGRESS"
   priority      = 1000
 }
