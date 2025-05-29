@@ -80,20 +80,20 @@ resource "kubernetes_deployment" "hello_world" {
           run_as_user     = 1000
         }
 
+        volume {
+          name = "nginx-cache"
+          empty_dir {}
+        }
+
+        volume {
+          name = "nginx-run"
+          empty_dir {}
+        }
+
         container {
           name              = "hello-world"
-          image             = "gcr.io/gke-cluster-458701/hello-world@sha256:7b8ff6260e91e35964aa729c9aa2765066c85e03ccd6a2f500140b381f351935"
+          image             = "gcr.io/gke-cluster-458701/hello-world:1.2.0@sha256:7b8ff6260e91e35964aa729c9aa2765066c85e03ccd6a2f500140b381f351935"
           image_pull_policy = "Always"
-
-          volume_mount {
-            name       = "nginx-cache"
-            mount_path = "/var/cache/nginx"
-          }
-
-          volume_mount {
-            name       = "nginx-run"
-            mount_path = "/var/run"
-          }
 
           security_context {
             run_as_non_root            = true
@@ -105,8 +105,29 @@ resource "kubernetes_deployment" "hello_world" {
             }
           }
 
+          resources {
+            limits = {
+              cpu    = "500m"
+              memory = "256Mi"
+            }
+            requests = {
+              cpu    = "250m"
+              memory = "128Mi"
+            }
+          }
+
           port {
             container_port = 80
+          }
+
+          volume_mount {
+            name       = "nginx-cache"
+            mount_path = "/var/cache/nginx"
+          }
+
+          volume_mount {
+            name       = "nginx-run"
+            mount_path = "/var/run"
           }
 
           readiness_probe {
@@ -125,27 +146,6 @@ resource "kubernetes_deployment" "hello_world" {
             initial_delay_seconds = 5
             period_seconds        = 10
           }
-
-          resources {
-            limits = {
-              cpu    = "500m"
-              memory = "256Mi"
-            }
-            requests = {
-              cpu    = "250m"
-              memory = "128Mi"
-            }
-          }
-        }
-
-        volume {
-          name = "nginx-cache"
-          empty_dir {}
-        }
-
-        volume {
-          name = "nginx-run"
-          empty_dir {}
         }
       }
     }
