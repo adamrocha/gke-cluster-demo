@@ -1,3 +1,4 @@
+/*
 resource "google_service_account" "gcs_service_account" {
   account_id   = "gcs-service-account"
   display_name = "GCS Service Account"
@@ -23,7 +24,7 @@ resource "google_storage_bucket_iam_member" "bucket_admin" {
     prevent_destroy = false
   }
 }
-
+*/
 resource "google_storage_bucket" "terraform_state" {
   name                        = var.terraform_state_bucket // Must be globally unique
   location                    = "us-central1"
