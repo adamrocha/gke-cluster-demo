@@ -49,7 +49,11 @@ resource "kubernetes_deployment" "hello_world" {
   }
 
   spec {
-    replicas = 2
+    replicas                  = 2
+    revision_history_limit    = 10
+    min_ready_seconds         = 5
+    progress_deadline_seconds = 180
+
     strategy {
       type = "RollingUpdate"
       rolling_update {
@@ -57,9 +61,6 @@ resource "kubernetes_deployment" "hello_world" {
         max_unavailable = "25%"
       }
     }
-    revision_history_limit    = 10
-    min_ready_seconds         = 5
-    progress_deadline_seconds = 180
 
     selector {
       match_labels = {
