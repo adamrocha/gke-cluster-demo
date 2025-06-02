@@ -2,6 +2,7 @@
 // These variables are used to simplify the configuration and avoid repetition.
 
 // IAM roles for the service account
+/*
 locals {
   sa_roles = [
     "roles/container.nodeServiceAccount",
@@ -18,7 +19,7 @@ locals {
     "container.googleapis.com"
   ]
 }
-
+*/
 resource "null_resource" "configure_kubectl" {
   depends_on = [google_container_cluster.gke_cluster]
 

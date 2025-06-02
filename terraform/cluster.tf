@@ -31,7 +31,7 @@ resource "google_container_cluster" "gke_cluster" {
   private_cluster_config {
     enable_private_nodes    = true
     enable_private_endpoint = false
-    master_ipv4_cidr_block  = "172.16.0.0/28" # Restrict to an internal IP range
+    master_ipv4_cidr_block  = "172.16.0.0/28"
   }
 
   # Disable client certificate authentication
@@ -75,7 +75,7 @@ resource "google_container_node_pool" "gke_pool" {
     // Enable Shielded GKE Nodes with Secure Boot
     # checkov:skip=CKV_GCP_68: Isolate deployments in separate node pools
     shielded_instance_config {
-      enable_secure_boot          = false
+      enable_secure_boot          = true
       enable_integrity_monitoring = true
     }
     /*
