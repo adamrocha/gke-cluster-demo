@@ -1,8 +1,8 @@
 data "google_client_config" "default" {}
 
 resource "google_container_cluster" "gke_cluster" {
+  # checkov:skip=CKV_GCP_69: Enabled at the node pool level
   # checkov:skip=CKV_GCP_20: No CIDR block for master authorized networks
-  # checkov:skip=CKV_GCP_61: conflicts with enable_autopilot
   depends_on               = [google_project_service.api_services]
   name                     = "demo-cluster"
   network                  = google_compute_network.gke_vpc.name
@@ -10,11 +10,24 @@ resource "google_container_cluster" "gke_cluster" {
   deletion_protection      = false
   initial_node_count       = 1
   remove_default_node_pool = true
-
-  # Add cluster-level labels
   resource_labels = {
     env   = "dev"
     owner = "dev-team"
+  }
+
+  workload_identity_config {
+    workload_pool = "${var.project_id}.svc.id.goog"
+  }
+
+  addons_config {
+    network_policy_config {
+      disabled = false
+    }
+  }
+
+  network_policy {
+    enabled  = true
+    provider = "CALICO"
   }
 
   # Set the release channel
@@ -34,7 +47,6 @@ resource "google_container_cluster" "gke_cluster" {
     master_ipv4_cidr_block  = "172.16.0.0/28"
   }
 
-  # Disable client certificate authentication
   master_auth {
     client_certificate_config {
       issue_client_certificate = false
@@ -72,8 +84,10 @@ resource "google_container_node_pool" "gke_pool" {
     disk_size_gb = 50
     oauth_scopes = ["https://www.googleapis.com/auth/cloud-platform"]
 
-    // Enable Shielded GKE Nodes with Secure Boot
-    # checkov:skip=CKV_GCP_68: Isolate deployments in separate node pools
+    workload_metadata_config {
+      mode = "GKE_METADATA"
+    }
+
     shielded_instance_config {
       enable_secure_boot          = true
       enable_integrity_monitoring = true
