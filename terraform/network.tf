@@ -31,10 +31,10 @@ resource "google_compute_subnetwork" "gke_subnet" {
   }
 }
 
-// Firewall rule to allow internal traffic
 resource "google_compute_firewall" "allow_internal" {
-  name    = "allow-internal"
-  network = google_compute_network.gke_vpc.name
+  name        = "allow-internal"
+  description = "Allow internal traffic within the GKE VPC"
+  network     = google_compute_network.gke_vpc.name
 
   allow {
     protocol = "icmp"
@@ -52,19 +52,17 @@ resource "google_compute_firewall" "allow_internal" {
   priority      = 65534
 }
 
-/*
-resource "google_compute_firewall" "allow_ssh" {
-  name        = "allow-ssh"
-  description = "Allow SSH from anywhere"
+resource "google_compute_firewall" "allow_iap_ssh" {
+  name        = "allow-iap-ssh"
+  description = "allow SSH access from Google Cloud IP ranges"
   network     = google_compute_network.gke_vpc.name
 
   allow {
     protocol = "tcp"
     ports    = ["22"]
   }
-  # Replace the IP below with your trusted IP or CIDR range
-  source_ranges = ["0.0.0.0/0"]
+
+  source_ranges = ["35.235.240.0/20"]
   direction     = "INGRESS"
   priority      = 1000
 }
-*/
