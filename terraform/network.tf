@@ -52,8 +52,8 @@ resource "google_compute_firewall" "allow_internal" {
   priority      = 65534
 }
 
+/*
 resource "google_compute_firewall" "allow_ssh" {
-  # checkov:skip=CKV_GCP_2: For dev prurposes only, not recommended for production
   name        = "allow-ssh"
   description = "Allow SSH from anywhere"
   network     = google_compute_network.gke_vpc.name
@@ -67,3 +67,4 @@ resource "google_compute_firewall" "allow_ssh" {
   direction     = "INGRESS"
   priority      = 1000
 }
+*/
