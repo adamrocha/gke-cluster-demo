@@ -52,7 +52,7 @@ resource "kubernetes_deployment" "hello_world" {
     replicas                  = 2
     revision_history_limit    = 10
     min_ready_seconds         = 5
-    progress_deadline_seconds = 180
+    progress_deadline_seconds = 300
 
     strategy {
       type = "RollingUpdate"
