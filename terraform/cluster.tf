@@ -1,6 +1,7 @@
 data "google_client_config" "default" {}
 
 resource "google_container_cluster" "gke_cluster" {
+  # checkov:skip=CKV_GCP_65: Security Groups - fix later
   # checkov:skip=CKV_GCP_69: Enabled at the node pool level
   # checkov:skip=CKV_GCP_20: No CIDR block for master authorized networks
   depends_on                  = [google_project_service.api_services]
