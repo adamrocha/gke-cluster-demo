@@ -4,7 +4,9 @@ resource "google_project_service" "api_services" {
     "container.googleapis.com",
     "secretmanager.googleapis.com",
     "networkmanagement.googleapis.com",
-    "logging.googleapis.com"
+    "logging.googleapis.com",
+    "oslogin.googleapis.com",
+    "geminicloudassist.googleapis.com"
   ])
   project                    = var.project_id
   service                    = each.key
@@ -33,6 +35,7 @@ resource "google_project_iam_member" "gke_sa_roles" {
   member  = "serviceAccount:${google_service_account.gke_service_account.email}"
 }
 
+/*
 resource "tls_private_key" "gke_ssh" {
   algorithm = "RSA"
   rsa_bits  = 4096
@@ -49,6 +52,22 @@ resource "google_secret_manager_secret" "gke_private_key" {
   }
 }
 
+resource "google_secret_manager_secret_version" "gke_private_key_version" {
+  secret      = google_secret_manager_secret.gke_private_key.id
+  secret_data = tls_private_key.gke_ssh.private_key_pem
+
+  provisioner "local-exec" {
+    command     = "mkdir -p /opt/keys"
+    interpreter = ["bash", "-c"]
+  }
+  provisioner "local-exec" {
+    command     = "echo '${tls_private_key.gke_ssh.private_key_pem}' > /opt/keys/gke-private-key.pem"
+    interpreter = ["bash", "-c"]
+  }
+}
+*/
+
+/*
 resource "google_service_account" "ansible_service_account" {
   account_id   = "ansible-service-account"
   display_name = "Ansible Service Account"
@@ -120,17 +139,4 @@ resource "google_secret_manager_secret_version" "ansible_key_secret-version" {
     prevent_destroy = false
   }
 }
-
-resource "google_secret_manager_secret_version" "gke_private_key_version" {
-  secret      = google_secret_manager_secret.gke_private_key.id
-  secret_data = tls_private_key.gke_ssh.private_key_pem
-
-  provisioner "local-exec" {
-    command     = "mkdir -p /opt/keys"
-    interpreter = ["bash", "-c"]
-  }
-  provisioner "local-exec" {
-    command     = "echo '${tls_private_key.gke_ssh.private_key_pem}' > /opt/keys/gke-private-key.pem"
-    interpreter = ["bash", "-c"]
-  }
-}
+*/
