@@ -1,5 +1,11 @@
 data "google_client_config" "default" {}
 
+resource "google_compute_project_metadata" "enable_oslogin" {
+  metadata = {
+    enable-oslogin = "TRUE"
+  }
+}
+
 resource "google_container_cluster" "gke_cluster" {
   # checkov:skip=CKV_GCP_65: Security Groups - fix later
   # checkov:skip=CKV_GCP_69: Enabled at the node pool level
@@ -99,6 +105,7 @@ resource "google_container_node_pool" "gke_pool" {
       ssh-keys = "gke-user:${tls_private_key.gke_ssh.public_key_openssh}"
     }
     */
+
     tags = ["gke-node"]
     labels = {
       env   = "dev"
