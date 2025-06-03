@@ -3,13 +3,14 @@ data "google_client_config" "default" {}
 resource "google_container_cluster" "gke_cluster" {
   # checkov:skip=CKV_GCP_69: Enabled at the node pool level
   # checkov:skip=CKV_GCP_20: No CIDR block for master authorized networks
-  depends_on               = [google_project_service.api_services]
-  name                     = "demo-cluster"
-  network                  = google_compute_network.gke_vpc.name
-  subnetwork               = google_compute_subnetwork.gke_subnet.name
-  deletion_protection      = false
-  initial_node_count       = 1
-  remove_default_node_pool = true
+  depends_on                  = [google_project_service.api_services]
+  name                        = "demo-cluster"
+  network                     = google_compute_network.gke_vpc.name
+  subnetwork                  = google_compute_subnetwork.gke_subnet.name
+  deletion_protection         = false
+  initial_node_count          = 1
+  enable_intranode_visibility = true
+  remove_default_node_pool    = true
   resource_labels = {
     env   = "dev"
     owner = "dev-team"
