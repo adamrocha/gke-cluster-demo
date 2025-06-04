@@ -6,7 +6,7 @@ PROJECT_ID="gke-cluster-458701"
 IMAGE_NAME="hello-world"
 IMAGE_TAG="1.2.0"
 
-cd ../kubernetes/ || exit 1
+cd ../kube/ || exit 1
 
 # Check if Docker is installed
 if ! command -v docker &> /dev/null; then
