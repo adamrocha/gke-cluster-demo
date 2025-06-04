@@ -56,3 +56,31 @@ resource "google_project_iam_member" "ansible_sa_roles" {
   member  = "serviceAccount:${google_service_account.ansible_service_account.email}"
 }
 */
+
+/*
+resource "google_service_account" "gcs_service_account" {
+  account_id   = "gcs-service-account"
+  display_name = "GCS Service Account"
+
+  lifecycle {
+    prevent_destroy = false
+  }
+}
+
+resource "google_storage_bucket_iam_member" "bucket_admin" {
+  depends_on = [google_project_service.api_services]
+  role       = each.key
+  for_each = toset([
+    //"roles/storage.admin",
+    //"roles/storage.objectAdmin",
+    //"roles/storage.objectCreator",
+    //"roles/storage.objectViewer"
+  ])
+  bucket = var.terraform_state_bucket
+  member = "serviceAccount:${google_service_account.gcs_service_account.email}"
+
+  lifecycle {
+    prevent_destroy = false
+  }
+}
+*/
