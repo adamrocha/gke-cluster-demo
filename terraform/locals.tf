@@ -19,7 +19,7 @@ resource "null_resource" "configure_kubectl" {
 
 resource "null_resource" "image_build" {
   provisioner "local-exec" {
-    command     = "/opt/github/gke-cluster/scripts/image.sh"
+    command     = "../scripts/image.sh"
     interpreter = ["bash", "-c"]
   }
 }
