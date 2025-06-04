@@ -3,25 +3,19 @@ projects:
   - gke-cluster-458701
 filters:
   - status = RUNNING
-#  - scheduling.automaticRestart = true AND status = RUNNING
 zones:
   - us-central1-a
   - us-central1-b
   - us-central1-c
   - us-central1-f
-auth_kind: serviceaccount
-service_account_file: /opt/keys/ansible-inventory-key.json
+auth_kind: application
 scopes:
   - 'https://www.googleapis.com/auth/cloud-platform'
-  - 'https://www.googleapis.com/auth/compute.readonly'
 keyed_groups:
-  # Create groups from GCE labels
-  - prefix: gke
-    key: labels
+  - key: labels.gke-node
+    prefix: gke_node
+    separator: "_"
 hostnames:
-  # List host by name instead of the default public ip
   - name
 compose:
-  # Set an inventory parameter to use the Public IP address to connect to the host
-  # For Private ip use "networkInterfaces[0].networkIP"
-  ansible_host: networkInterfaces[0].accessConfigs[0].natIP
+  ansible_host: networkInterfaces[0].networkIP
