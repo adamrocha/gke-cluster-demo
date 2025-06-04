@@ -84,7 +84,7 @@ resource "google_storage_bucket_object" "folder" {
   depends_on   = [google_storage_bucket.terraform_state]
   name         = "terraform/state/dev" // Trailing slash simulates a folder
   bucket       = var.terraform_state_bucket
-  source       = "/opt/github/gke-cluster/terraform/terraform.tfstate" // Empty object to simulate folder
+  source       = "terraform.tfstate" // Empty object to simulate folder
   content_type = "application/json"
   metadata = {
     environment = "terraform"
