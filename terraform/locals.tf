@@ -32,8 +32,6 @@ locals {
   my_ip = "${chomp(data.http.my_ip.response_body)}/32"
 }
 
-
-
 // This file contains local variables used in the Terraform configuration.
 // These variables are used to simplify the configuration and avoid repetition.
 
