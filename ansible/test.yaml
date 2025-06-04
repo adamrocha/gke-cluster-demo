@@ -1,9 +1,7 @@
 - name: GCP instance test
   hosts: all
-  gather_facts: false
-  remote_user: ansible
-  become: false
+  become: true
   become_method: sudo
   tasks:
-    - name: Ping instances
+    - name: Ping test
       ansible.builtin.ping:
