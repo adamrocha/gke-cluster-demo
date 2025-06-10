@@ -18,6 +18,10 @@ resource "null_resource" "configure_kubectl" {
 }
 
 resource "null_resource" "image_build" {
+  triggers = {
+    always_run = timestamp()
+  }
+  
   provisioner "local-exec" {
     command     = "../scripts/image.sh"
     interpreter = ["bash", "-c"]
