@@ -35,22 +35,21 @@ else
   echo "❌ Image ${IMAGE_PATH}:${IMAGE_TAG} not found. Building and pushing..."
 
   # Build the Docker image
-  docker buildx build --platform linux/amd64 -t "${IMAGE_PATH}:${IMAGE_TAG}" .
-
-  # shellcheck disable=SC2181
-  if [ $? -ne 0 ]; then
+  if ! docker buildx build --platform linux/amd64 \
+    -t "${IMAGE_PATH}:${IMAGE_TAG}" \
+    --push .; then
     echo "❌ Docker build failed."
     exit 1
+  else
+    echo "✅ Successfully built ${IMAGE_PATH}:${IMAGE_TAG}."
   fi
 
-  # Push the Docker image to GCR
-  docker push "${IMAGE_PATH}:${IMAGE_TAG}"
-
-  # shellcheck disable=SC2181
-  if [ $? -eq 0 ]; then
-    echo "✅ Successfully pushed "${IMAGE_PATH}:${IMAGE_TAG}" to GCR."
-  else
-    echo "❌ Failed to push image to GCR."
+  # Push the Docker image to GAR
+  if ! docker push "${IMAGE_PATH}:${IMAGE_TAG}"; then
+    echo "❌ Failed to push image to GAR."
     exit 1
+  else
+    echo "✅ Successfully pushed ${IMAGE_PATH}:${IMAGE_TAG} to GAR."
+    exit 0
   fi
 fi
