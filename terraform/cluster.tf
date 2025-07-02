@@ -18,6 +18,7 @@ resource "google_container_cluster" "gke_cluster" {
   initial_node_count          = 1
   enable_intranode_visibility = true
   remove_default_node_pool    = true
+  networking_mode             = "VPC_NATIVE"
   resource_labels = {
     env   = "dev"
     owner = "dev-team"
@@ -80,7 +81,7 @@ resource "google_container_node_pool" "gke_pool" {
 
   autoscaling {
     min_node_count = 1
-    max_node_count = 4
+    max_node_count = 5
   }
 
   node_config {
