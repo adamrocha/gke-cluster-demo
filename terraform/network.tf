@@ -16,12 +16,12 @@ resource "google_compute_subnetwork" "gke_subnet" {
 
   secondary_ip_range {
     range_name    = "services-range"
-    ip_cidr_range = "192.168.0.0/16"
+    ip_cidr_range = "10.10.0.0/16"
   }
 
   secondary_ip_range {
     range_name    = "pod-ranges"
-    ip_cidr_range = "192.169.0.0/16"
+    ip_cidr_range = "10.20.0.0/16"
   }
 
   log_config {
@@ -29,6 +29,13 @@ resource "google_compute_subnetwork" "gke_subnet" {
     flow_sampling        = 0.5                    # Sampling rate between 0.0 and 1.0
     metadata             = "INCLUDE_ALL_METADATA" # Options: INCLUDE_ALL_METADATA, EXCLUDE_ALL_METADATA, CUSTOM_METADATA
   }
+}
+
+resource "google_compute_global_address" "gke_lb_ip" {
+  description  = "Global IP for GKE Load Balancer"
+  name         = "gke-lb-ip"
+  ip_version   = "IPV4"
+  address_type = "EXTERNAL"
 }
 
 resource "google_compute_firewall" "allow_internal" {
