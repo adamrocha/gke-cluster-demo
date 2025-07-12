@@ -1,4 +1,4 @@
-# gke-cluster
+# gke-cluster-demo
   
 This project demonstrates how to deploy and manage a Kubernetes cluster on Google Kubernetes Engine (GKE). It includes sample manifests, deployment scripts, and instructions to help you get started quickly.
 
