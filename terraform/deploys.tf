@@ -49,7 +49,7 @@ resource "kubernetes_deployment" "hello_world" {
   }
 
   spec {
-    replicas                  = 2
+    replicas                  = 3
     revision_history_limit    = 10
     min_ready_seconds         = 5
     progress_deadline_seconds = 300
@@ -93,7 +93,7 @@ resource "kubernetes_deployment" "hello_world" {
 
         container {
           name              = "hello-world"
-          image             = "gcr.io/gke-cluster-458701/hello-world:1.2.0@sha256:7b8ff6260e91e35964aa729c9aa2765066c85e03ccd6a2f500140b381f351935"
+          image             = "gcr.io/gke-cluster-458701/hello-world:1.2.2@sha256:a308245ac08ddaf85d38fb7208f3a9b1f6e6f275ae60fe358edf6aa5babcab15"
           image_pull_policy = "Always"
 
           security_context {
@@ -108,12 +108,12 @@ resource "kubernetes_deployment" "hello_world" {
 
           resources {
             limits = {
-              cpu    = "500m"
-              memory = "256Mi"
+              cpu    = "100m"
+              memory = "64Mi"
             }
             requests = {
-              cpu    = "250m"
-              memory = "128Mi"
+              cpu    = "50m"
+              memory = "32Mi"
             }
           }
 

@@ -39,3 +39,9 @@ variable "kubeconfig_path" {
   description = "The path to the kubeconfig file for accessing the GKE cluster."
   default     = "~/.kube/config"
 }
+
+variable "instance_type" {
+  type        = string
+  description = "The machine type for the GKE nodes."
+  default     = "e2-micro"
+}
