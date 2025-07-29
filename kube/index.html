@@ -2,8 +2,108 @@
 <html>
     <head>
         <title>Hello World</title>
+        <style>
+            body {
+                background-color: #181a1b;
+                color: #f5f6fa;
+                font-family: Arial, sans-serif;
+            }
+            h1 {
+                color: #8be9fd;
+                text-align: center;
+                margin-top: 20vh;
+            }
+            canvas#confetti-canvas {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                pointer-events: none;
+                z-index: 9999;
+            }
+        </style>
     </head>
     <body>
-        <h1>Hello from Kubernetes!</h1>
+        <canvas id="confetti-canvas"></canvas>
+        <h1>&#128640; Hello from Kubernetes! &#128640;</h1>
+        <script>
+            // Simple confetti effect
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            let W = window.innerWidth;
+            let H = window.innerHeight;
+            canvas.width = W;
+            canvas.height = H;
+
+            const confettiColors = ['#f9ca24', '#e17055', '#00b894', '#0984e3', '#fd79a8', '#fdcb6e', '#00cec9'];
+            const confettiCount = 120;
+            const confetti = [];
+
+            function randomInt(min, max) {
+                return Math.floor(Math.random() * (max - min + 1)) + min;
+            }
+
+            function Confetto() {
+                this.x = randomInt(0, W);
+                this.y = randomInt(-H, 0);
+                this.r = randomInt(5, 10);
+                this.d = randomInt(2, 6);
+                this.color = confettiColors[randomInt(0, confettiColors.length - 1)];
+                this.tilt = randomInt(-10, 10);
+                this.tiltAngleIncremental = (Math.random() * 0.07) + .05;
+                this.tiltAngle = 0;
+
+                this.draw = function() {
+                    ctx.beginPath();
+                    ctx.lineWidth = this.r;
+                    ctx.strokeStyle = this.color;
+                    ctx.moveTo(this.x + this.tilt + (this.r / 3), this.y);
+                    ctx.lineTo(this.x + this.tilt, this.y + this.tilt + this.d);
+                    ctx.stroke();
+                }
+            }
+
+            function drawConfetti() {
+                ctx.clearRect(0, 0, W, H);
+                for (let i = 0; i < confetti.length; i++) {
+                    confetti[i].draw();
+                }
+                updateConfetti();
+            }
+
+            function updateConfetti() {
+                for (let i = 0; i < confetti.length; i++) {
+                    confetti[i].y += (Math.cos(confetti[i].d) + 3 + confetti[i].d / 2) / 2;
+                    confetti[i].x += Math.sin(0.01 * confetti[i].y);
+                    confetti[i].tiltAngle += confetti[i].tiltAngleIncremental;
+                    confetti[i].tilt = Math.sin(confetti[i].tiltAngle) * 15;
+
+                    if (confetti[i].y > H) {
+                        confetti[i].x = randomInt(0, W);
+                        confetti[i].y = randomInt(-20, 0);
+                        confetti[i].tilt = randomInt(-10, 10);
+                    }
+                }
+            }
+
+            function resizeCanvas() {
+                W = window.innerWidth;
+                H = window.innerHeight;
+                canvas.width = W;
+                canvas.height = H;
+            }
+
+            window.addEventListener('resize', resizeCanvas);
+
+            for (let i = 0; i < confettiCount; i++) {
+                confetti.push(new Confetto());
+            }
+
+            (function animateConfetti() {
+                drawConfetti();
+                requestAnimationFrame(animateConfetti);
+            })();
+        </script>
     </body>
 </html>
