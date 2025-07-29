@@ -43,5 +43,41 @@ variable "kubeconfig_path" {
 variable "instance_type" {
   type        = string
   description = "The machine type for the GKE nodes."
-  default     = "e2-micro"
+  default     = "e2-medium"
+}
+
+variable "repo_name" {
+  description = "ECR repository name"
+  default     = "hello-world"
+  type        = string
+}
+
+variable "image_tag" {
+  description = "Docker image tag"
+  default     = "1.2.2"
+  type        = string
+}
+
+variable "image_digest" {
+  description = "Digest of the Docker image to be used in the deployment"
+  default     = "sha256:a308245ac08ddaf85d38fb7208f3a9b1f6e6f275ae60fe358edf6aa5babcab15"
+  type        = string
+}
+
+variable "namespace" {
+  description = "Name of the Kubernetes namespace"
+  default     = "hello-world-ns"
+  type        = string
+}
+
+variable "service" {
+  description = "Name of the Kubernetes service"
+  default     = "hello-world-service"
+  type        = string
+}
+
+variable "deployment" {
+  description = "Name of the Kubernetes deployment"
+  default     = "hello-world"
+  type        = string
 }
