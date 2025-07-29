@@ -11,10 +11,10 @@ resource "kubernetes_namespace" "hello_world_ns" {
 resource "kubernetes_service" "hello_world_service" {
   depends_on = [kubernetes_namespace.hello_world_ns]
   metadata {
-    name      = "hello-world-service"
+    name      = var.service
     namespace = kubernetes_namespace.hello_world_ns.metadata[0].name
     labels = {
-      app = "hello-world"
+      app = var.deployment
     }
 
     annotations = {
@@ -24,7 +24,7 @@ resource "kubernetes_service" "hello_world_service" {
 
   spec {
     selector = {
-      app = "hello-world"
+      app = var.deployment
     }
 
     type = "LoadBalancer"
@@ -41,10 +41,10 @@ resource "kubernetes_service" "hello_world_service" {
 resource "kubernetes_deployment" "hello_world" {
   depends_on = [kubernetes_namespace.hello_world_ns]
   metadata {
-    name      = "hello-world"
+    name      = var.deployment
     namespace = kubernetes_namespace.hello_world_ns.metadata[0].name
     labels = {
-      app = "hello-world"
+      app = var.deployment
     }
   }
 
@@ -64,14 +64,14 @@ resource "kubernetes_deployment" "hello_world" {
 
     selector {
       match_labels = {
-        app = "hello-world"
+        app = var.deployment
       }
     }
 
     template {
       metadata {
         labels = {
-          app = "hello-world"
+          app = var.deployment
         }
       }
 
@@ -92,8 +92,8 @@ resource "kubernetes_deployment" "hello_world" {
         }
 
         container {
-          name              = "hello-world"
-          image             = "gcr.io/gke-cluster-458701/hello-world:1.2.2@sha256:a308245ac08ddaf85d38fb7208f3a9b1f6e6f275ae60fe358edf6aa5babcab15"
+          name              = var.deployment
+          image             = "gcr.io/${var.project_id}/${var.repo_name}:${var.image_tag}@${var.image_digest}"
           image_pull_policy = "Always"
 
           security_context {
@@ -108,12 +108,12 @@ resource "kubernetes_deployment" "hello_world" {
 
           resources {
             limits = {
-              cpu    = "100m"
-              memory = "64Mi"
+              cpu    = "250m"
+              memory = "128Mi"
             }
             requests = {
-              cpu    = "50m"
-              memory = "32Mi"
+              cpu    = "100m"
+              memory = "64Mi"
             }
           }
 
