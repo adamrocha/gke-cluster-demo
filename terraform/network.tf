@@ -1,17 +1,18 @@
 resource "google_compute_network" "gke_vpc" {
   depends_on              = [google_project_service.api_services]
+  description             = "VPC for GKE"
   name                    = "gke-vpc"
   routing_mode            = "REGIONAL"
   auto_create_subnetworks = false
-  description             = "VPC for GKE"
+
 }
 
 resource "google_compute_subnetwork" "gke_subnet" {
   depends_on               = [google_project_service.api_services]
+  description              = "GKE Subnet"
   name                     = "gke-subnet"
   network                  = google_compute_network.gke_vpc.id
   ip_cidr_range            = "10.0.0.0/16"
-  description              = "GKE Subnet"
   private_ip_google_access = true
 
   secondary_ip_range {
