@@ -24,6 +24,12 @@ resource "google_container_cluster" "gke_cluster" {
     owner = "dev-team"
   }
 
+  dns_config {
+    cluster_dns        = "CLOUD_DNS"
+    cluster_dns_scope  = "VPC_SCOPE"
+    cluster_dns_domain = "cluster.local"
+  }
+
   workload_identity_config {
     workload_pool = "${var.project_id}.svc.id.goog"
   }
@@ -87,11 +93,10 @@ resource "google_container_node_pool" "gke_pool" {
   node_config {
     service_account = google_service_account.gke_service_account.email
     preemptible     = true
-    machine_type    = "e2-medium"
-    //machine_type = "e2-micro"
-    disk_type    = "pd-standard"
-    disk_size_gb = 50
-    oauth_scopes = ["https://www.googleapis.com/auth/cloud-platform"]
+    machine_type    = var.instance_type
+    disk_type       = "pd-standard"
+    disk_size_gb    = 50
+    oauth_scopes    = ["https://www.googleapis.com/auth/cloud-platform"]
 
     workload_metadata_config {
       mode = "GKE_METADATA"
