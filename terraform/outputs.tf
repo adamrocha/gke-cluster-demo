@@ -10,11 +10,6 @@ output "subnet_cidr" {
   value = google_compute_subnetwork.gke_subnet.ip_cidr_range
 }
 
-# output "bucket_url" {
-#   value       = "gs://${google_storage_bucket.terraform_state.name}"
-#   description = "The URL of the GCS bucket."
-# }
-
 output "gke_cluster_endpoint" {
   value       = google_container_cluster.gke_cluster.endpoint
   description = "hello-world endpoint"

@@ -6,10 +6,12 @@ resource "google_compute_project_metadata" "enable_oslogin" {
   }
 }
 
+data "external" "my_ip" {
+  program = ["bash", "${path.module}./scripts/get_my_ip.sh"]
+}
+
 resource "google_container_cluster" "gke_cluster" {
-  # checkov:skip=CKV_GCP_65: Security Groups - fix later
-  # checkov:skip=CKV_GCP_69: Enabled at the node pool level
-  # checkov:skip=CKV_GCP_20: No CIDR block for master authorized networks
+  # checkov:skip=CKV_GCP_69: enabled at the node pool level
   depends_on                  = [google_project_service.api_services]
   name                        = "demo-cluster"
   network                     = google_compute_network.gke_vpc.name
@@ -22,6 +24,18 @@ resource "google_container_cluster" "gke_cluster" {
   resource_labels = {
     env   = "dev"
     owner = "dev-team"
+  }
+
+  master_authorized_networks_config {
+    cidr_blocks {
+      cidr_block   = "${data.external.my_ip.result.ip}/32"
+      display_name = "My IP"
+    }
+
+  }
+
+  authenticator_groups_config {
+    security_group = "gke-security-groups@yourdomain.com"
   }
 
   dns_config {
