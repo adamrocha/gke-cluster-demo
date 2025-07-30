@@ -4,7 +4,7 @@ resource "kubernetes_namespace" "hello_world_ns" {
     google_container_node_pool.gke_pool
   ]
   metadata {
-    name = "hello-world-ns"
+    name = var.namespace
   }
 }
 
@@ -12,7 +12,7 @@ resource "kubernetes_service" "hello_world_service" {
   depends_on = [kubernetes_namespace.hello_world_ns]
   metadata {
     name      = var.service
-    namespace = kubernetes_namespace.hello_world_ns.metadata[0].name
+    namespace = var.namespace
     labels = {
       app = var.deployment
     }
@@ -42,7 +42,7 @@ resource "kubernetes_deployment" "hello_world" {
   depends_on = [kubernetes_namespace.hello_world_ns]
   metadata {
     name      = var.deployment
-    namespace = kubernetes_namespace.hello_world_ns.metadata[0].name
+    namespace = var.namespace
     labels = {
       app = var.deployment
     }
@@ -78,7 +78,7 @@ resource "kubernetes_deployment" "hello_world" {
       spec {
         security_context {
           run_as_non_root = true
-          run_as_user     = 1000
+          run_as_user     = 10001
         }
 
         volume {
@@ -98,7 +98,7 @@ resource "kubernetes_deployment" "hello_world" {
 
           security_context {
             run_as_non_root            = true
-            run_as_user                = 1000
+            run_as_user                = 10001
             allow_privilege_escalation = false
             read_only_root_filesystem  = true
             capabilities {
