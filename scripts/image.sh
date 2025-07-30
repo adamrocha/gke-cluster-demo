@@ -5,6 +5,7 @@
 PROJECT_ID="gke-cluster-458701"
 IMAGE_NAME="hello-world"
 IMAGE_TAG="1.2.2"
+PLATFORM_ARCH="linux/amd64"
 
 cd ../kube/ || exit 1
 
@@ -35,7 +36,8 @@ else
   echo "❌ Image ${IMAGE_PATH}:${IMAGE_TAG} not found. Building and pushing..."
 
   # Build the Docker image
-  if ! docker buildx build --platform linux/amd64 \
+  if ! docker buildx build \
+    --platform ${PLATFORM_ARCH} \
     -t "${IMAGE_PATH}:${IMAGE_TAG}" \
     --push .; then
     echo "❌ Docker build failed."
