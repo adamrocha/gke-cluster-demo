@@ -34,9 +34,9 @@ resource "google_container_cluster" "gke_cluster" {
 
   }
 
-  authenticator_groups_config {
-    security_group = "gke-security-groups@yourdomain.com"
-  }
+  # authenticator_groups_config {
+  #   security_group = "gke-security-groups@yourdomain.com"
+  # }
 
   dns_config {
     cluster_dns        = "CLOUD_DNS"

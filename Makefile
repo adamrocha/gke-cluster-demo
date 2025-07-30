@@ -1,5 +1,8 @@
-BUCKET_NAME=terraform-state-bucket-2727
+GCP_PROJECT=gke-cluster-458701
 LOCATION=us-central1
+BUCKET_NAME=terraform-state-bucket-2727
+REPO_NAME=gcr.io
+REPO_LOCATION=us
 TF_DIR=terraform
 
 .PHONY: all create-bucket enable-versioning set-lifecycle clean
@@ -8,10 +11,6 @@ tf-tasks: tf-format tf-init tf-validate tf-plan
 	@echo "🚀 Running Terraform tasks..."
 	@echo "✅ Terraform tasks completed successfully."
 	@echo "To apply changes, run 'make tf-apply'."
-
-tf-bucket: create-bucket enable-versioning set-lifecycle add-labels
-	@echo "✅ GCS bucket created and configured for Terraform state."
-
 
 tf-format:
 	cd $(TF_DIR) && terraform fmt
@@ -47,6 +46,20 @@ tf-state:
 	@echo "✅ Terraform state listed."
 	@echo "🔍 To view specific resource, run 'terraform state show <resource_name>'."
 
+delete-artifact-repo:
+	@echo "⚠️  WARNING: This will permanently delete the Artifact Registry repository: $(REPO_NAME)"
+	@read -p "Are you sure? (y/N): " confirm; \
+	if [ "$$confirm" = "y" ]; then \
+		echo "🗑️  Deleting repository $(REPO_NAME) from $(REPO_LOCATION) in project $(GCP_PROJECT)..."; \
+		gcloud artifacts repositories delete $(REPO_NAME) \
+			--location=$(REPO_LOCATION) \
+			--project=$(GCP_PROJECT) --quiet; \
+	else \
+		echo "❌ Deletion cancelled."; \
+	fi
+
+tf-bucket: create-bucket enable-versioning set-lifecycle add-labels
+	@echo "✅ GCS bucket created and configured for Terraform state."
 
 create-bucket:
 	@echo "🚀 Creating GCS bucket: gs://$(BUCKET_NAME)"
