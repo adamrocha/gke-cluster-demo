@@ -4,7 +4,7 @@ resource "kubernetes_namespace" "hello_world_ns" {
     google_container_node_pool.gke_pool
   ]
   metadata {
-    name = var.namespace
+    name = var.hello_world_ns
   }
 }
 
@@ -12,7 +12,7 @@ resource "kubernetes_service" "hello_world_service" {
   depends_on = [kubernetes_namespace.hello_world_ns]
   metadata {
     name      = var.service
-    namespace = var.namespace
+    namespace = var.hello_world_ns
     labels = {
       app = var.deployment
     }
@@ -42,7 +42,7 @@ resource "kubernetes_deployment" "hello_world" {
   depends_on = [kubernetes_namespace.hello_world_ns]
   metadata {
     name      = var.deployment
-    namespace = var.namespace
+    namespace = var.hello_world_ns
     labels = {
       app = var.deployment
     }
