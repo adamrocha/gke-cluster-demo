@@ -23,7 +23,7 @@ resource "null_resource" "image_build" {
   }
 
   provisioner "local-exec" {
-    command     = "${path.root}./scripts/image.sh"
+    command     = "../scripts/docker-image.sh"
     interpreter = ["bash", "-c"]
   }
 }
