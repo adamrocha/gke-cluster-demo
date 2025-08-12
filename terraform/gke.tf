@@ -7,7 +7,7 @@ resource "google_compute_project_metadata" "enable_oslogin" {
 }
 
 data "external" "my_ip" {
-  program = ["bash", "${path.module}./scripts/get_my_ip.sh"]
+  program = ["bash", "../scripts/fetch-ip.sh"]
 }
 
 resource "google_container_cluster" "gke_cluster" {
