@@ -3,7 +3,7 @@ resource "helm_release" "prometheus" {
   name             = "prometheus"
   repository       = "https://prometheus-community.github.io/helm-charts"
   chart            = "kube-prometheus-stack"
-  namespace        = "monitoring"
+  namespace        = var.monitoring_ns
   create_namespace = true
   timeout          = 600
   skip_crds        = false
@@ -11,12 +11,24 @@ resource "helm_release" "prometheus" {
 
   set = [
     {
-      name  = "prometheus.service.type"
-      value = "LoadBalancer"
+      name  = "grafana.enabled"
+      value = "true"
     },
     {
       name  = "grafana.service.type"
-      value = "LoadBalancer"
+      value = "ClusterIP"
+    },
+    {
+      name  = "grafana.service.port"
+      value = "80"
+    },
+    {
+      name  = "alertmanager.service.type"
+      value = "ClusterIP"
+    },
+    {
+      name  = "prometheus.service.type"
+      value = "ClusterIP"
     }
   ]
 }
