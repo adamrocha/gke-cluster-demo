@@ -8,7 +8,7 @@ TF_DIR=terraform
 .PHONY: all create-bucket enable-versioning set-lifecycle clean
 
 tf-tasks: tf-format tf-init tf-validate tf-plan
-	@echo "🚀 Running Terraform tasks..."
+	@echo "🔄 Running Terraform tasks..."
 	@echo "✅ Terraform tasks completed successfully."
 	@echo "To apply changes, run 'make tf-apply'."
 
