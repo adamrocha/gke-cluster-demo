@@ -109,7 +109,7 @@ resource "null_resource" "vault_init" {
         echo "Unsealing Vault..."
         kubectl exec -n vault-ns vault-0 -- vault operator unseal "$VAULT_UNSEAL_KEY"
 
-        echo "$VAULT_ROOT_TOKEN" > ~/.vault-token
+        # echo "$VAULT_ROOT_TOKEN" > ~/.vault-token
       fi
     EOT
   }
@@ -133,7 +133,7 @@ resource "null_resource" "vault_store_kubeconfig" {
       done
 
       export VAULT_ADDR='http://127.0.0.1:8200'
-      export VAULT_TOKEN=$(cat ~/.vault-token)
+      # export VAULT_TOKEN=$(cat ~/.vault-token)
 
       echo "Backing up current kubeconfig to ~/.kube/config.bak"
       mkdir -p ~/.kube
@@ -148,7 +148,8 @@ resource "null_resource" "vault_store_kubeconfig" {
       cat ~/.kube/config | vault kv put secret/kubeconfig value=-
 
       echo "Stopping port-forward..."
-      kill $PF_PID
+      # kill $PF_PID || true
+      pkill -f 'kubectl port-forward svc/vault -n ${var.vault_ns} 8200:8200' || true
     EOT
   }
 }
@@ -170,7 +171,7 @@ resource "null_resource" "vault_retrieve_kubeconfig" {
       done
 
       export VAULT_ADDR='http://127.0.0.1:8200'
-      export VAULT_TOKEN=$(cat ~/.vault-token)
+      # export VAULT_TOKEN=$(cat ~/.vault-token)
 
       echo "Backing up existing kubeconfig to ~/.kube/config.bak"
       mkdir -p ~/.kube
