@@ -22,6 +22,12 @@ variable "environment" {
   default     = "dev"
 }
 
+variable "cluster_name" {
+  description = "The name of the GKE cluster."
+  default     = "demo-cluster"
+  type        = string
+}
+
 variable "terraform_state_bucket" {
   type        = string
   description = "The name of the GCS bucket for storing Terraform state."
