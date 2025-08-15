@@ -9,26 +9,24 @@ resource "helm_release" "prometheus" {
   skip_crds        = false
   wait             = true
 
-  set = [
-    {
-      name  = "grafana.enabled"
-      value = "true"
-    },
-    {
-      name  = "grafana.service.type"
-      value = "ClusterIP"
-    },
-    {
-      name  = "grafana.service.port"
-      value = "80"
-    },
-    {
-      name  = "alertmanager.service.type"
-      value = "ClusterIP"
-    },
-    {
-      name  = "prometheus.service.type"
-      value = "ClusterIP"
-    }
-  ]
+  set {
+    name  = "grafana.enabled"
+    value = "true"
+  }
+  set {
+    name  = "grafana.service.type"
+    value = "ClusterIP"
+  }
+  set {
+    name  = "grafana.service.port"
+    value = "80"
+  }
+  set {
+    name  = "alertmanager.service.type"
+    value = "ClusterIP"
+  }
+  set {
+    name  = "prometheus.service.type"
+    value = "ClusterIP"
+  }
 }
