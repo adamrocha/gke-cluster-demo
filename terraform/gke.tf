@@ -13,7 +13,7 @@ data "external" "my_ip" {
 resource "google_container_cluster" "gke_cluster" {
   # checkov:skip=CKV_GCP_69: enabled at the node pool level
   depends_on                  = [google_project_service.api_services]
-  name                        = "demo-cluster"
+  name                        = var.cluster_name
   network                     = google_compute_network.gke_vpc.name
   subnetwork                  = google_compute_subnetwork.gke_subnet.name
   deletion_protection         = false

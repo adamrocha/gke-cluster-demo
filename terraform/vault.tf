@@ -79,7 +79,7 @@ resource "null_resource" "vault_port_forward" {
       kubectl port-forward svc/vault -n ${var.vault_ns} 8200:8200 >/tmp/vault-pf.log 2>&1 &
       echo "Vault UI should be available at http://localhost:8200/ui"
       echo "To stop port-forward, kill the background process:"
-      echo "  pkill -f 'kubectl port-forward svc/vault -n ${var.vault_ns} 8200:8200'"
+      echo "pkill -f 'kubectl port-forward svc/vault -n ${var.vault_ns} 8200:8200'"
     EOT
     # Keep this running during apply, or run detached (this is a simple fire-and-forget)
   }
@@ -97,6 +97,7 @@ resource "null_resource" "vault_init" {
 
       if [ "$IS_INIT" = "true" ]; then
         echo "Vault is already initialized, skipping init"
+        pkill -f 'kubectl port-forward svc/vault -n ${var.vault_ns} 8200:8200' 2>&1
       else
         echo "Initializing Vault..."
         kubectl exec -n ${var.vault_ns} vault-0 -- vault operator init -key-shares=1 -key-threshold=1 > ~/vault_init.txt
@@ -140,14 +141,14 @@ resource "null_resource" "vault_store_kubeconfig" {
       fi
 
       echo "Generating fresh kubeconfig with gcloud CLI"
-      gcloud container clusters get-credentials demo-cluster --project ${var.project_id} --region ${var.region}
+      gcloud container clusters get-credentials ${google_container_cluster.gke_cluster.name} --region ${var.region}
 
       echo "Storing kubeconfig in Vault..."
       cat ~/.kube/config | vault kv put secret/kubeconfig value=-
 
       echo "Stopping port-forward..."
-      # kill $PF_PID || true
-      pkill -f 'kubectl port-forward svc/vault -n ${var.vault_ns} 8200:8200' || true
+      kill $PF_PID 2>&1
+      # pkill -f 'kubectl port-forward svc/vault -n ${var.vault_ns} 8200:8200' || true
     EOT
   }
 }
@@ -191,8 +192,8 @@ resource "null_resource" "vault_retrieve_kubeconfig" {
       fi
 
       echo "Stopping port-forward..."
-      # kill $PF_PID || true
-      pkill -f 'kubectl port-forward svc/vault -n ${var.vault_ns} 8200:8200' || true
+      kill $PF_PID 2>&1
+      # pkill -f 'kubectl port-forward svc/vault -n ${var.vault_ns} 8200:8200' || true
     EOT
   }
 }
