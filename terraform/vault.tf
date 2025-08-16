@@ -4,7 +4,7 @@ resource "helm_release" "vault" {
   namespace  = var.vault_ns
   repository = "https://helm.releases.hashicorp.com"
   chart      = "vault"
-  version    = "0.28.0"
+  version    = "0.30.1"
   timeout    = 600
 
   create_namespace = true
