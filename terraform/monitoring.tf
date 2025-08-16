@@ -8,6 +8,7 @@ resource "helm_release" "prometheus" {
   timeout          = 600
   skip_crds        = false
   wait             = true
+  version          = "76.4.0"
 
   set {
     name  = "grafana.enabled"
