@@ -9,25 +9,37 @@ resource "helm_release" "prometheus" {
   skip_crds        = false
   wait             = true
   version          = "76.4.0"
-
-  set {
-    name  = "grafana.enabled"
-    value = "true"
-  }
-  set {
-    name  = "grafana.service.type"
-    value = "ClusterIP"
-  }
-  set {
-    name  = "grafana.service.port"
-    value = "80"
-  }
-  set {
-    name  = "alertmanager.service.type"
-    value = "ClusterIP"
-  }
-  set {
-    name  = "prometheus.service.type"
-    value = "ClusterIP"
-  }
 }
+#   set {
+#     name  = "grafana.enabled"
+#     value = "true"
+#   }
+#   set {
+#     name  = "grafana.service.type"
+#     value = "ClusterIP"
+#   }
+#   set {
+#     name  = "grafana.service.port"
+#     value = "80"
+#   }
+#   set {
+#     name  = "alertmanager.service.type"
+#     value = "ClusterIP"
+#   }
+#   set {
+#     name  = "prometheus.service.type"
+#     value = "ClusterIP"
+#   }
+#   set {
+#     name  = "coreDns.enabled"
+#     value = "true"
+#   }
+#   set {
+#     name  = "coreDns.serviceMonitor.enabled"
+#     value = "true"
+#   }
+#   set {
+#     name  = "prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues"
+#     value = "false"
+#   }
+# }
