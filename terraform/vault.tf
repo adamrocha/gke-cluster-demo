@@ -90,9 +90,9 @@ resource "null_resource" "vault_port_forward" {
 
 resource "null_resource" "vault_init" {
   depends_on = [null_resource.wait_for_vault]
-  
+
   provisioner "local-exec" {
-    command = <<EOT
+    command     = <<EOT
       # set -euo pipefail
       kubectl port-forward svc/vault -n ${var.vault_ns} 8200:8200 >/tmp/vault-pf.log 2>&1 &
       PF_PID=$!
@@ -125,7 +125,7 @@ resource "null_resource" "vault_store_kubeconfig" {
   depends_on = [null_resource.vault_init]
 
   provisioner "local-exec" {
-    command = <<EOT
+    command     = <<EOT
       # set -euo pipefail
 
       echo "Starting Vault port-forward for storing kubeconfig..."
@@ -165,7 +165,7 @@ resource "null_resource" "vault_retrieve_kubeconfig" {
   depends_on = [null_resource.vault_store_kubeconfig]
 
   provisioner "local-exec" {
-    command = <<EOT
+    command     = <<EOT
       # set -euo pipefail
 
       echo "Starting Vault port-forward for retrieving kubeconfig..."
