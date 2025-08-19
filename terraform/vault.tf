@@ -90,7 +90,7 @@ resource "null_resource" "vault_init" {
   
   provisioner "local-exec" {
     command = <<EOT
-      # set -euo pipefail
+      set -euox pipefail
 
       echo "Checking Vault initialization status..."
       IS_INIT=$(kubectl exec -n ${var.vault_ns} vault-0 -- vault status -format=json | jq -r '.initialized')
