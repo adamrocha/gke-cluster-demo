@@ -90,7 +90,7 @@ resource "null_resource" "vault_init" {
   
   provisioner "local-exec" {
     command = <<EOT
-      set -euo pipefail
+      # set -euo pipefail
 
       echo "Checking Vault initialization status..."
       IS_INIT=$(kubectl exec -n ${var.vault_ns} vault-0 -- vault status -format=json | jq -r '.initialized')
@@ -120,7 +120,7 @@ resource "null_resource" "vault_store_kubeconfig" {
 
   provisioner "local-exec" {
     command = <<EOT
-      set -euo pipefail
+      # set -euo pipefail
 
       echo "Starting Vault port-forward for storing kubeconfig..."
       kubectl port-forward svc/vault -n ${var.vault_ns} 8200:8200 >/tmp/vault-pf.log 2>&1 &
@@ -160,7 +160,7 @@ resource "null_resource" "vault_retrieve_kubeconfig" {
 
   provisioner "local-exec" {
     command = <<EOT
-      set -euo pipefail
+      # set -euo pipefail
 
       echo "Starting Vault port-forward for retrieving kubeconfig..."
       kubectl port-forward svc/vault -n vault-ns 8200:8200 >/tmp/vault-pf.log 2>&1 &
