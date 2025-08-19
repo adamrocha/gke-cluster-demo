@@ -111,7 +111,7 @@ resource "null_resource" "vault_init" {
         # echo "$VAULT_ROOT_TOKEN" > ~/.vault-token
       fi
     EOT
-    interpreter = ["/bin/bash"]
+    interpreter = ["/bin/bash", "-c"]
   }
 }
 
@@ -151,7 +151,7 @@ resource "null_resource" "vault_store_kubeconfig" {
       kill $PF_PID 2>&1
       # pkill -f 'kubectl port-forward svc/vault -n ${var.vault_ns} 8200:8200' || true
     EOT
-    interpreter = ["/bin/bash"]
+    interpreter = ["/bin/bash", "-c"]
   }
 }
 
@@ -197,6 +197,6 @@ resource "null_resource" "vault_retrieve_kubeconfig" {
       kill $PF_PID 2>&1
       # pkill -f 'kubectl port-forward svc/vault -n ${var.vault_ns} 8200:8200' || true
     EOT
-    interpreter = ["/bin/bash"]
+    interpreter = ["/bin/bash", "-c"]
   }
 }
