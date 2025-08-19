@@ -112,7 +112,7 @@ resource "null_resource" "vault_init" {
         # echo "$VAULT_ROOT_TOKEN" > ~/.vault-token
       fi
     EOT
-    interpreter = ["bash", "-c"]
+    interpreter = ["/bin/bash"]
   }
 }
 
