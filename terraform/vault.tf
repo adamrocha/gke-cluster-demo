@@ -77,9 +77,12 @@ resource "null_resource" "vault_port_forward" {
     command = <<EOT
       echo "Starting Vault port-forward..."
       kubectl port-forward svc/vault -n ${var.vault_ns} 8200:8200 >/tmp/vault-pf.log 2>&1 &
+      PF_PID=$!
       echo "Vault UI should be available at http://localhost:8200/ui"
       echo "To stop port-forward, kill the background process:"
       echo "pkill -f 'kubectl port-forward svc/vault -n ${var.vault_ns} 8200:8200'"
+      echo "Stopping port-forward..."
+      kill $PF_PID 2>&1
     EOT
     # Keep this running during apply, or run detached (this is a simple fire-and-forget)
   }
@@ -91,13 +94,16 @@ resource "null_resource" "vault_init" {
   provisioner "local-exec" {
     command = <<EOT
       # set -euo pipefail
+      kubectl port-forward svc/vault -n ${var.vault_ns} 8200:8200 >/tmp/vault-pf.log 2>&1 &
+      PF_PID=$!
 
       echo "Checking Vault initialization status..."
       IS_INIT=$(kubectl exec -n ${var.vault_ns} vault-0 -- vault status -format=json | jq -r '.initialized')
 
       if [ "$IS_INIT" = "true" ]; then
         echo "Vault is already initialized, skipping init"
-        pkill -fe 'kubectl port-forward svc/vault -n vault-ns 8200:8200' -TERM || true
+        echo "Stopping port-forward..."
+        kill $PF_PID 2>&1
       else
         echo "Initializing Vault..."
         kubectl exec -n ${var.vault_ns} vault-0 -- vault operator init -key-shares=1 -key-threshold=1 > ~/vault_init.txt
