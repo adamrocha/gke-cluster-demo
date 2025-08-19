@@ -90,13 +90,14 @@ resource "null_resource" "vault_init" {
   
   provisioner "local-exec" {
     command = <<EOT
+      # set -euo pipefail
 
       echo "Checking Vault initialization status..."
       IS_INIT=$(kubectl exec -n ${var.vault_ns} vault-0 -- vault status -format=json | jq -r '.initialized')
 
       if [ "$IS_INIT" = "true" ]; then
         echo "Vault is already initialized, skipping init"
-        pkill -f 'kubectl port-forward svc/vault -n ${var.vault_ns} 8200:8200' >/dev/null || true
+        # pkill -f 'kubectl port-forward svc/vault -n ${var.vault_ns} 8200:8200' >/dev/null || true
       else
         echo "Initializing Vault..."
         kubectl exec -n ${var.vault_ns} vault-0 -- vault operator init -key-shares=1 -key-threshold=1 > ~/vault_init.txt
