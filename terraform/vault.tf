@@ -97,7 +97,7 @@ resource "null_resource" "vault_init" {
       IS_INIT=$(kubectl exec -n ${var.vault_ns} vault-0 -- vault status -format=json | jq -r '.initialized')
 
       if [ "$IS_INIT" = "true" ]; then
-        echo "Vault is already initialized, skipping init"
+        echo "Vault is already initialized, skipping init" || true
         pkill -f 'kubectl port-forward svc/vault -n ${var.vault_ns} 8200:8200' 2>&1
       else
         echo "Initializing Vault..."
