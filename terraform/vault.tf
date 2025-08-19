@@ -90,7 +90,6 @@ resource "null_resource" "vault_init" {
   
   provisioner "local-exec" {
     command = <<EOT
-      #!/usr/bin/env bash
       set -euo pipefail
 
       echo "Checking Vault initialization status..."
@@ -121,7 +120,6 @@ resource "null_resource" "vault_store_kubeconfig" {
 
   provisioner "local-exec" {
     command = <<EOT
-      #!/usr/bin/env bash
       set -euo pipefail
 
       echo "Starting Vault port-forward for storing kubeconfig..."
@@ -153,7 +151,7 @@ resource "null_resource" "vault_store_kubeconfig" {
       kill $PF_PID 2>&1
       # pkill -f 'kubectl port-forward svc/vault -n ${var.vault_ns} 8200:8200' || true
     EOT
-    interpreter = ["bash", "-c"]
+    interpreter = ["/bin/bash"]
   }
 }
 
@@ -162,7 +160,6 @@ resource "null_resource" "vault_retrieve_kubeconfig" {
 
   provisioner "local-exec" {
     command = <<EOT
-      #!/usr/bin/env bash
       set -euo pipefail
 
       echo "Starting Vault port-forward for retrieving kubeconfig..."
@@ -200,6 +197,6 @@ resource "null_resource" "vault_retrieve_kubeconfig" {
       kill $PF_PID 2>&1
       # pkill -f 'kubectl port-forward svc/vault -n ${var.vault_ns} 8200:8200' || true
     EOT
-    interpreter = ["bash", "-c"]
+    interpreter = ["/bin/bash"]
   }
 }
