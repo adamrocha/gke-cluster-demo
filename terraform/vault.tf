@@ -90,6 +90,7 @@ resource "null_resource" "vault_init" {
 
   provisioner "local-exec" {
     command = <<EOT
+      #!/usr/bin/env bash
       set -euo pipefail
 
       echo "Checking Vault initialization status..."
@@ -119,6 +120,7 @@ resource "null_resource" "vault_store_kubeconfig" {
 
   provisioner "local-exec" {
     command = <<EOT
+      #!/usr/bin/env bash
       set -euo pipefail
 
       echo "Starting Vault port-forward for storing kubeconfig..."
@@ -158,6 +160,7 @@ resource "null_resource" "vault_retrieve_kubeconfig" {
 
   provisioner "local-exec" {
     command = <<EOT
+      #!/usr/bin/env bash
       set -euo pipefail
 
       echo "Starting Vault port-forward for retrieving kubeconfig..."
