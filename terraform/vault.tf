@@ -97,7 +97,7 @@ resource "null_resource" "vault_init" {
 
       if [ "$IS_INIT" = "true" ]; then
         echo "Vault is already initialized, skipping init"
-        pkill -f 'kubectl port-forward svc/vault -n ${var.vault_ns} 8200:8200' 2>&1
+        pkill -f 'kubectl port-forward svc/vault -n ${var.vault_ns} 8200:8200'
       else
         echo "Initializing Vault..."
         kubectl exec -n ${var.vault_ns} vault-0 -- vault operator init -key-shares=1 -key-threshold=1 > ~/vault_init.txt
@@ -110,7 +110,6 @@ resource "null_resource" "vault_init" {
 
         # echo "$VAULT_ROOT_TOKEN" > ~/.vault-token
       fi
-      exit 0
     EOT
     interpreter = ["/bin/bash", "-c"]
   }
