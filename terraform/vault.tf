@@ -63,47 +63,54 @@ resource "null_resource" "wait_for_vault" {
   depends_on = [helm_release.vault]
 
   provisioner "local-exec" {
-    command = <<EOT
+    command     = <<EOT
       echo "Waiting for Vault to be ready..."
       kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=vault -n ${var.vault_ns} --timeout=180s
     EOT
+    interpreter = ["/bin/bash", "-c"]
   }
 }
 
 resource "null_resource" "vault_port_forward" {
-  depends_on = [helm_release.vault]
+  depends_on = [null_resource.wait_for_vault]
 
   provisioner "local-exec" {
-    command = <<EOT
+    command     = <<EOT
       echo "Starting Vault port-forward..."
       kubectl port-forward svc/vault -n ${var.vault_ns} 8200:8200 >/tmp/vault-pf.log 2>&1 &
+      PF_PID=$!
       echo "Vault UI should be available at http://localhost:8200/ui"
       echo "To stop port-forward, kill the background process:"
       echo "pkill -f 'kubectl port-forward svc/vault -n ${var.vault_ns} 8200:8200'"
+      echo "Stopping port-forward..."
+      kill $PF_PID 2>&1
     EOT
-    # Keep this running during apply, or run detached (this is a simple fire-and-forget)
+    interpreter = ["/bin/bash", "-c"]
   }
 }
 
 resource "null_resource" "vault_init" {
-  depends_on = [null_resource.wait_for_vault]
+  depends_on = [null_resource.vault_port_forward]
 
   provisioner "local-exec" {
-    command = <<EOT
+    command     = <<EOT
       set -euo pipefail
+      kubectl port-forward svc/vault -n ${var.vault_ns} 8200:8200 >/tmp/vault-pf.log 2>&1 &
+      PF_PID=$!
 
       echo "Checking Vault initialization status..."
       IS_INIT=$(kubectl exec -n ${var.vault_ns} vault-0 -- vault status -format=json | jq -r '.initialized')
 
       if [ "$IS_INIT" = "true" ]; then
         echo "Vault is already initialized, skipping init"
-        pkill -f 'kubectl port-forward svc/vault -n ${var.vault_ns} 8200:8200' 2>&1
+        echo "Stopping port-forward..."
+        kill $PF_PID 2>&1
       else
         echo "Initializing Vault..."
         kubectl exec -n ${var.vault_ns} vault-0 -- vault operator init -key-shares=1 -key-threshold=1 > ~/vault_init.txt
 
-        VAULT_UNSEAL_KEY=$(grep 'Unseal Key 1:' vault_init.txt | awk '{print $4}')
-        VAULT_ROOT_TOKEN=$(grep 'Initial Root Token:' vault_init.txt | awk '{print $4}')
+        VAULT_UNSEAL_KEY=$(grep 'Unseal Key 1:' ~/vault_init.txt | awk '{print $4}')
+        VAULT_ROOT_TOKEN=$(grep 'Initial Root Token:' ~/vault_init.txt | awk '{print $4}')
 
         echo "Unsealing Vault..."
         kubectl exec -n vault-ns vault-0 -- vault operator unseal "$VAULT_UNSEAL_KEY"
@@ -111,6 +118,7 @@ resource "null_resource" "vault_init" {
         # echo "$VAULT_ROOT_TOKEN" > ~/.vault-token
       fi
     EOT
+    interpreter = ["/bin/bash", "-c"]
   }
 }
 
@@ -118,7 +126,7 @@ resource "null_resource" "vault_store_kubeconfig" {
   depends_on = [null_resource.vault_init]
 
   provisioner "local-exec" {
-    command = <<EOT
+    command     = <<EOT
       set -euo pipefail
 
       echo "Starting Vault port-forward for storing kubeconfig..."
@@ -141,15 +149,15 @@ resource "null_resource" "vault_store_kubeconfig" {
       fi
 
       echo "Generating fresh kubeconfig with gcloud CLI"
-      gcloud container clusters get-credentials ${google_container_cluster.gke_cluster.name} --region ${var.region}
+      gcloud container clusters get-credentials ${var.cluster_name} --region ${var.region}
 
       echo "Storing kubeconfig in Vault..."
       cat ~/.kube/config | vault kv put secret/kubeconfig value=-
 
       echo "Stopping port-forward..."
       kill $PF_PID 2>&1
-      # pkill -f 'kubectl port-forward svc/vault -n ${var.vault_ns} 8200:8200' || true
     EOT
+    interpreter = ["/bin/bash", "-c"]
   }
 }
 
@@ -157,7 +165,7 @@ resource "null_resource" "vault_retrieve_kubeconfig" {
   depends_on = [null_resource.vault_store_kubeconfig]
 
   provisioner "local-exec" {
-    command = <<EOT
+    command     = <<EOT
       set -euo pipefail
 
       echo "Starting Vault port-forward for retrieving kubeconfig..."
@@ -193,7 +201,7 @@ resource "null_resource" "vault_retrieve_kubeconfig" {
 
       echo "Stopping port-forward..."
       kill $PF_PID 2>&1
-      # pkill -f 'kubectl port-forward svc/vault -n ${var.vault_ns} 8200:8200' || true
     EOT
+    interpreter = ["/bin/bash", "-c"]
   }
 }
