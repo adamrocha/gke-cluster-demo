@@ -93,7 +93,7 @@ resource "kubernetes_deployment" "hello_world" {
 
         container {
           name              = var.deployment
-          image             = "us-docker.pkg.dev/${var.project_id}/${var.repo_name}/${var.image_name}:${var.image_tag}" # @${var.image_digest}"
+          image             = "us-docker.pkg.dev/${var.project_id}/${var.repo_name}/${var.image_name}:${var.image_tag}@${var.image_digest}"
           image_pull_policy = "Always"
 
           security_context {
