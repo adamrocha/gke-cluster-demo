@@ -3,6 +3,11 @@
 # If the Artifact Registry repo does not exist, it will be created automatically.
 # It builds a multi-arch image (linux/amd64 and linux/arm64).
 
+set -euo pipefail
+
+PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+export PROJECT_ROOT
+
 # Required inputs
 PROJECT_ID="gke-cluster-458701"
 REPO_NAME="hello-world-repo"
@@ -10,7 +15,7 @@ IMAGE_NAME="hello-world"
 IMAGE_TAG="1.2.2"
 LOCATION="us"
 
-cd ../kube/ || exit 1
+cd "${PROJECT_ROOT}/kube/" || exit 1
 
 # Check for required tools
 for cmd in docker gcloud; do
