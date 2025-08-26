@@ -60,17 +60,18 @@ fi
 gcloud auth configure-docker "${LOCATION}-docker.pkg.dev" -q
 
 # Check if the image with the given tag exists
+echo "🔍 Checking if ${IMAGE_PATH}:${IMAGE_TAG} exists in Artifact Registry..."
 TAG_FOUND=$(gcloud artifacts docker images list "${IMAGE_PATH}" \
-  --filter="tags:${IMAGE_TAG}" \
-  --format="get(tags)" \
+  --include-tags \
+  --filter="tags=${IMAGE_TAG}" \
+  --format="value(tags)" \
   --project "${PROJECT_ID}" 2>/dev/null)
 
-if [[ "$TAG_FOUND" == *"$IMAGE_TAG"* ]]; then
-  echo "✅ Image ${IMAGE_PATH}:${IMAGE_TAG} already exists."
+if [[ -n "$TAG_FOUND" ]]; then
+  echo "✅ Image ${IMAGE_PATH}:${IMAGE_TAG} already exists in Artifact Registry."
   exit 0
 else
   echo "❌ Image ${IMAGE_PATH}:${IMAGE_TAG} not found. Building and pushing..."
-
   if ! docker buildx build \
     --platform linux/amd64,linux/arm64 \
     -t "${IMAGE_PATH}:${IMAGE_TAG}" \
