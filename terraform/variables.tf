@@ -52,6 +52,12 @@ variable "repo_name" {
   type        = string
 }
 
+variable "image_name" {
+  description = "Docker image name"
+  default     = "hello-world"
+  type        = string
+}
+
 variable "image_tag" {
   description = "Docker image tag"
   default     = "1.2.2"
