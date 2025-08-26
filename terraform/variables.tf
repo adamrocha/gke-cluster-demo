@@ -48,7 +48,7 @@ variable "instance_type" {
 
 variable "repo_name" {
   description = "ECR repository name"
-  default     = "hello-world"
+  default     = "hello-world-repo"
   type        = string
 }
 
@@ -60,7 +60,7 @@ variable "image_tag" {
 
 variable "image_digest" {
   description = "Digest of the Docker image to be used in the deployment"
-  default     = "sha256:2e62673af8af6d70d0088bfa3aefcd5081be95da63c40ca651928782baa1b4ae"
+  default     = "sha256:2c839df57adc2df9728fe8aa42a3f3c0f66c785ef2f56bec920bce609390c098"
   type        = string
 }
 
