@@ -1,7 +1,7 @@
 GCP_PROJECT=gke-cluster-458701
 LOCATION=us-central1
 BUCKET_NAME=terraform-state-bucket-2727
-REPO_NAME=gcr.io
+REPO_NAME=hello-world-repo
 REPO_LOCATION=us
 TF_DIR=terraform
 
