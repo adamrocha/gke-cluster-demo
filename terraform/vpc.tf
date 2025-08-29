@@ -1,7 +1,7 @@
 resource "google_compute_network" "gke_vpc" {
   depends_on              = [google_project_service.api_services]
-  description             = "VPC for GKE"
   name                    = "gke-vpc"
+  description             = "VPC for GKE"
   routing_mode            = "REGIONAL"
   auto_create_subnetworks = false
 
@@ -9,8 +9,8 @@ resource "google_compute_network" "gke_vpc" {
 
 resource "google_compute_subnetwork" "gke_subnet" {
   depends_on               = [google_project_service.api_services]
-  description              = "GKE Subnet"
   name                     = "gke-subnet"
+  description              = "GKE Subnet"
   network                  = google_compute_network.gke_vpc.id
   ip_cidr_range            = "10.0.0.0/16"
   private_ip_google_access = true
@@ -33,8 +33,8 @@ resource "google_compute_subnetwork" "gke_subnet" {
 }
 
 resource "google_compute_global_address" "gke_lb_ip" {
-  description  = "Global IP for GKE Load Balancer"
   name         = "gke-lb-ip"
+  description  = "Global IP for GKE Load Balancer"
   ip_version   = "IPV4"
   address_type = "EXTERNAL"
 }
@@ -76,9 +76,10 @@ resource "google_compute_firewall" "allow_iap_ssh" {
 }
 
 resource "google_compute_router" "nat_router" {
-  name    = "nat-router"
-  region  = var.region
-  network = google_compute_network.gke_vpc.name
+  name        = "nat-router"
+  description = "NAT Router"
+  region      = var.region
+  network     = google_compute_network.gke_vpc.name
 }
 
 resource "google_compute_router_nat" "nat_config" {

@@ -1,25 +1,25 @@
 variable "project_id" {
-  type        = string
   description = "The GCP project ID where resources will be created."
   default     = "gke-cluster-458701"
+  type        = string
 }
 
 variable "region" {
-  type        = string
   description = "The GCP region for the GKE cluster and network resources."
   default     = "us-central1"
+  type        = string
 }
 
 variable "zone" {
-  type        = string
   description = "The GCP zone for the GKE node pool."
   default     = "us-central1-a"
+  type        = string
 }
 
 variable "environment" {
-  type        = string
   description = "The environment for the GKE cluster (e.g., dev, staging, prod)."
   default     = "dev"
+  type        = string
 }
 
 variable "cluster_name" {
@@ -29,21 +29,21 @@ variable "cluster_name" {
 }
 
 variable "terraform_state_bucket" {
-  type        = string
   description = "The name of the GCS bucket for storing Terraform state."
   default     = "terraform-state-bucket-1337"
+  type        = string
 }
 
 variable "kubeconfig_path" {
-  type        = string
   description = "The path to the kubeconfig file for accessing the GKE cluster."
   default     = "~/.kube/config"
+  type        = string
 }
 
 variable "instance_type" {
-  type        = string
   description = "The machine type for the GKE nodes."
   default     = "e2-medium"
+  type        = string
 }
 
 variable "repo_name" {
