@@ -11,7 +11,6 @@ provider "google-beta" {
 }
 
 provider "kubernetes" {
-  alias = "gke"
   host  = "https://${google_container_cluster.gke_cluster.endpoint}"
   token = data.google_client_config.default.access_token
   cluster_ca_certificate = base64decode(
