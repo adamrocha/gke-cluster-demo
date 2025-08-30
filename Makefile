@@ -5,7 +5,16 @@ REPO_NAME=hello-world-repo
 REPO_LOCATION=us
 TF_DIR=terraform
 
-.PHONY: all create-bucket enable-versioning set-lifecycle clean
+.PHONY: check-gcp
+
+check-gcp:
+	@echo "🔍 Checking GCP project: $(GCP_PROJECT)"
+	@if ! gcloud projects describe $(GCP_PROJECT) --format="value(projectId)" | grep -q $(GCP_PROJECT) >/dev/null 2>&1; then \
+		echo "⚠️ Project $(GCP_PROJECT) not found."; \
+		exit 1; \
+	else \
+		echo "✅ GCP project $(GCP_PROJECT) exists."; \
+	fi
 
 tf-bootstrap: tf-bucket tf-format tf-init tf-validate tf-plan
 	@echo "🔄 Runnin terraform bootstrap..."
