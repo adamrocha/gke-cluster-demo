@@ -16,6 +16,10 @@ check-gcp:
 		echo "✅ GCP project $(GCP_PROJECT) exists."; \
 	fi
 
+install-tools:
+	@echo "🚀 Running install-tools script..."
+	@/bin/bash ./scripts/install-tools.sh
+
 tf-bootstrap: tf-bucket tf-format tf-init tf-validate tf-plan
 	@echo "🔄 Runnin terraform bootstrap..."
 	@echo "✅ Terraform bootstrap completed successfully."
