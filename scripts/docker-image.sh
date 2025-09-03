@@ -15,10 +15,27 @@ IMAGE_NAME="hello-world"
 IMAGE_TAG="1.2.2"
 PLATFORMS="linux/amd64,linux/arm64"
 OS_TYPE="$(uname -s)"
-# PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
-# export PROJECT_ROOT
+PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+export PROJECT_ROOT
 
 cd "${PROJECT_ROOT}/kube/" || exit 1
+
+# ------------------------------------------------------------
+# Image path
+# ------------------------------------------------------------
+IMAGE_PATH="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${IMAGE_NAME}"
+IMAGE_FULL="${IMAGE_PATH}:${IMAGE_TAG}"
+
+# ------------------------------------------------------------
+# Check if image tag exists in Artifact Registry using gcloud
+# ------------------------------------------------------------
+echo "🔎 Checking Artifact Registry for $IMAGE_FULL (gcloud)..."
+if gcloud artifacts docker images describe "$IMAGE_FULL" --project="$PROJECT_ID" >/dev/null 2>&1; then
+  echo "✅ Image $IMAGE_FULL already exists in Artifact Registry."
+  exit 0
+else
+  echo "ℹ️  Image not found in Artifact Registry via gcloud. Will build and push using Docker..."
+fi
 
 # ------------------------------------------------------------
 # Verify Docker + Buildx
@@ -66,22 +83,6 @@ if ! gcloud artifacts repositories describe "$REPO" \
     --project="$PROJECT_ID"
 else
   echo "✅ Artifact Registry repo $REPO exists."
-fi
-
-# ------------------------------------------------------------
-# Image path
-# ------------------------------------------------------------
-IMAGE_PATH="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${IMAGE_NAME}"
-IMAGE_FULL="${IMAGE_PATH}:${IMAGE_TAG}"
-
-# ------------------------------------------------------------
-# Check if image tag exists using docker pull (multi-arch safe)
-# ------------------------------------------------------------
-if docker pull "$IMAGE_FULL" &>/dev/null; then
-  echo "✅ Image $IMAGE_FULL already exists in Artifact Registry."
-  exit 0
-else
-  echo "❌ Image $IMAGE_FULL not found. Building and pushing..."
 fi
 
 # ------------------------------------------------------------
