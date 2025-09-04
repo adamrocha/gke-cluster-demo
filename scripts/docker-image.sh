@@ -21,6 +21,20 @@ export PROJECT_ROOT
 cd "${PROJECT_ROOT}/kube/" || exit 1
 
 # ------------------------------------------------------------
+# Ensure repo exists
+# ------------------------------------------------------------
+if ! gcloud artifacts repositories describe "$REPO" \
+  --location="$REGION" --project="$PROJECT_ID" >/dev/null 2>&1; then
+  echo "📦 Creating Artifact Registry repo: $REPO..."
+  gcloud artifacts repositories create "$REPO" \
+    --repository-format=docker \
+    --location="$REGION" \
+    --project="$PROJECT_ID"
+else
+  echo "✅ Artifact Registry repo $REPO exists."
+fi
+
+# ------------------------------------------------------------
 # Image path
 # ------------------------------------------------------------
 IMAGE_PATH="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${IMAGE_NAME}"
@@ -70,20 +84,6 @@ fi
 
 echo "🔑 Configuring docker credential helper for GAR..."
 gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
-
-# ------------------------------------------------------------
-# Ensure repo exists
-# ------------------------------------------------------------
-if ! gcloud artifacts repositories describe "$REPO" \
-  --location="$REGION" --project="$PROJECT_ID" >/dev/null 2>&1; then
-  echo "📦 Creating Artifact Registry repo: $REPO..."
-  gcloud artifacts repositories create "$REPO" \
-    --repository-format=docker \
-    --location="$REGION" \
-    --project="$PROJECT_ID"
-else
-  echo "✅ Artifact Registry repo $REPO exists."
-fi
 
 # ------------------------------------------------------------
 # Build + Push
