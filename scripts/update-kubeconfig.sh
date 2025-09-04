@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# This script fetches credentials for a Google Cloud project and sets up Docker authentication for Google Container Registry (GCR).
+# This script updates the kubeconfig file to access the GKE cluster.
 
 PROJECT_ID="gke-cluster-458701"
 REGION="us-central1"
