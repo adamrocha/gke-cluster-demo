@@ -98,7 +98,7 @@ add-labels:
 	gcloud storage buckets update gs://$(BUCKET_NAME) \
 		--update-labels=environment=terraform,purpose=state-storage
 
-clean:
+nuke:
 	@echo "⚠️  This will delete the bucket: $(BUCKET_NAME)"
 	@read -p "Are you sure? (y/N): " confirm; \
 	if [ "$$confirm" = "y" ]; then \
