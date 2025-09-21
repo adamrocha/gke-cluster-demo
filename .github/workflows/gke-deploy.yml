@@ -62,15 +62,21 @@ jobs:
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v2
 
+      - name: Terraform Format
+        run: terraform -chdir=terraform fmt -check
+
       - name: Terraform Init
         run: terraform -chdir=terraform init
+
+      - name: Terraform Validate
+        run: terraform -chdir=terraform validate
 
       - name: Terraform Plan
         run: terraform -chdir=terraform plan
 
-    #   - name: Terraform Apply
-    #     if: github.ref == 'refs/heads/main'
-    #     run: terraform -chdir=terraform apply -auto-approve
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/dev'
+        run: terraform -chdir=terraform apply -auto-approve
 
   docker:
     runs-on: ubuntu-latest
