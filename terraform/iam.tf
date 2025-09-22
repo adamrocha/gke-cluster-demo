@@ -30,7 +30,7 @@ resource "google_project_iam_member" "gke_sa_roles" {
     "roles/storage.objectViewer",
     "roles/artifactregistry.reader",
     "roles/container.defaultNodeServiceAccount",
-    "logging.buckets.update",
+    "logging.buckets.update"
   ])
   project = var.project_id
   role    = each.key
