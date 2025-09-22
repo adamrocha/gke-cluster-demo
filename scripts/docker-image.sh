@@ -9,7 +9,7 @@ set -euo pipefail
 # Config
 # ------------------------------------------------------------
 PROJECT_ID="gke-cluster-458701"
-REGION="us"
+REGION="us-central1"
 REPO="hello-world-repo"
 IMAGE_NAME="hello-world"
 IMAGE_TAG="1.2.2"
@@ -24,27 +24,27 @@ cd "${PROJECT_ROOT}/kube/" || exit 1
 # Ensure repo exists
 # ------------------------------------------------------------
 if ! gcloud artifacts repositories describe "$REPO" \
-  --location="$REGION" --project="$PROJECT_ID" >/dev/null 2>&1; then
+    --repository-format=docker \
+    --location="$REGION" \
+    --project="$PROJECT_ID" >/dev/null 2>&1; then
   echo "📦 Creating Artifact Registry repo: $REPO..."
   gcloud artifacts repositories create "$REPO" \
     --repository-format=docker \
     --location="$REGION" \
-    --project="$PROJECT_ID"
-else
-  echo "✅ Artifact Registry repo $REPO exists."
+    --project="$PROJECT_ID" || true
 fi
 
 # ------------------------------------------------------------
 # Image path
 # ------------------------------------------------------------
-IMAGE_PATH="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${IMAGE_NAME}"
-IMAGE_FULL="${IMAGE_PATH}:${IMAGE_TAG}"
+IMAGE_PATH="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${IMAGE_NAME}:${IMAGE_TAG}"
 
 # ------------------------------------------------------------
 # Check if image tag exists in Artifact Registry using gcloud
 # ------------------------------------------------------------
-echo "🔎 Checking Artifact Registry for $IMAGE_FULL (gcloud)..."
-if gcloud artifacts docker images describe "$IMAGE_FULL" --project="$PROJECT_ID" >/dev/null 2>&1; then
+echo "🔎 Checking Artifact Registry for $IMAGE_PATH (gcloud)..."
+if gcloud artifacts docker images describe "$IMAGE_PATH" \
+    --project="$PROJECT_ID" >/dev/null 2>&1; then
   echo "✅ Image $IMAGE_FULL already exists in Artifact Registry."
   exit 0
 else
@@ -90,11 +90,11 @@ gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
 # ------------------------------------------------------------
 if ! docker buildx build \
   --platform "$PLATFORMS" \
-  -t "$IMAGE_FULL" \
+  -t "$IMAGE_PATH" \
   --push .; then
   echo "❌ Docker build failed."
   exit 1
 else
-  echo "✅ Successfully built and pushed $IMAGE_FULL."
+  echo "✅ Successfully built and pushed $IMAGE_PATH to Artifact Registry."
   exit 0
 fi
