@@ -22,6 +22,7 @@ env:
   REPO_NAME: "hello-world-repo"
   IMAGE_TAG: "1.2.2"
   REGION: "us-central1"
+  IMAGE_PATH: ${{ REGION }}-docker.pkg.dev/${{ GCP_PROJECT_ID }}/${{ REPO_NAME }}/${{ IMAGE_NAME }}:${{ IMAGE_TAG }}
 
 jobs:
   setup:
@@ -63,10 +64,10 @@ jobs:
           docker login -u _json_key --password "${{ secrets.GCP_SA_KEY }}" https://${{ vars.GCP_REGION }}-docker.pkg.dev
 
       - name: Build Docker image
-        run: docker build -t gcr.io/${{ vars.GCP_PROJECT_ID }}/${{ vars.GKE_CLUSTER_NAME }}:${{ vars.IMAGE_TAG }} -f kube/Dockerfile kube/
+        run: docker buildx build --platform ${{ vars.PLATFORMS }} -t ${{ vars.IMAGE_PATH }} -f kube/Dockerfile kube/ --push
 
-      - name: Push Docker image
-        run: docker push gcr.io/${{ vars.GCP_PROJECT_ID }}/${{ vars.GKE_CLUSTER_NAME }}:${{ vars.IMAGE_TAG }}
+      # - name: Push Docker image
+      #   run: docker push ${{ vars.IMAGE_PATH }}
 
   terraform:
     runs-on: ubuntu-latest
