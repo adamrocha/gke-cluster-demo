@@ -24,7 +24,7 @@ variable "environment" {
 
 variable "cluster_name" {
   description = "The name of the GKE cluster."
-  default     = "demo-cluster"
+  default     = "gke-cluster-demo"
   type        = string
 }
 
@@ -66,7 +66,7 @@ variable "image_tag" {
 
 variable "image_digest" {
   description = "Digest of the Docker image to be used in the deployment"
-  default     = "sha256:cf7df76bcd16d5bb58cf482492e97e0c3fc897494f7a60a05ca84dcee5eb0ed8"
+  default     = ""
   type        = string
 }
 
