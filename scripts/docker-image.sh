@@ -73,17 +73,17 @@ fi
 # ------------------------------------------------------------
 # Ensure docker credential helper
 # ------------------------------------------------------------
-if ! command -v docker-credential-gcr >/dev/null 2>&1 && [[ "$OS_TYPE" == "Linux" ]]; then
-    echo "🔧 Installing docker-credential-gcr..."
-    sudo apt-get update -qq
-    sudo apt-get install -y google-cloud-cli-docker-credential-gcr
-  elif ! command -v docker-credential-osxkeychain >/dev/null 2>&1 && [[ "$OS_TYPE" == "Darwin" ]]; then
-    echo "🔧 Installing docker-credential-helper for Mac..."
-    brew install docker-credential-helper
-fi
+# if ! command -v docker-credential-gcr >/dev/null 2>&1 && [[ "$OS_TYPE" == "Linux" ]]; then
+#     echo "🔧 Installing docker-credential-gcr..."
+#     sudo apt-get update -qq
+#     sudo apt-get install -y google-cloud-cli-docker-credential-gcr
+#   elif ! command -v docker-credential-osxkeychain >/dev/null 2>&1 && [[ "$OS_TYPE" == "Darwin" ]]; then
+#     echo "🔧 Installing docker-credential-helper for Mac..."
+#     brew install docker-credential-helper
+# fi
 
-echo "🔑 Configuring docker credential helper for GAR..."
-gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+# echo "🔑 Configuring docker credential helper for GAR..."
+# gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
 
 # ------------------------------------------------------------
 # Build + Push
