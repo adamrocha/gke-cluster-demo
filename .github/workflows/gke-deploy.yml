@@ -17,7 +17,7 @@ env:
   GKE_CLUSTER_NAME: ${{ vars.GKE_CLUSTER_NAME }}
   GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
   GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
-  GKE_REGION: ${{ vars.GKE_REGION }}
+  GCP_REGION: ${{ vars.GCP_REGION }}
   IMAGE_NAME: "hello-world"
   REPO_NAME: "hello-world-repo"
   IMAGE_TAG: "1.2.2"
@@ -38,11 +38,49 @@ jobs:
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v3
         with:
-          project_id: ${{ vars.GCP_PROJECT_ID }}
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+
+
+  terraform:
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - id: 'auth'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v3
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Terraform Format
+        run: terraform -chdir=terraform fmt -check
+
+      - name: Terraform Init
+        run: terraform -chdir=terraform init
+
+      - name: Terraform Validate
+        run: terraform -chdir=terraform validate
+
+      - name: Terraform Plan
+        run: terraform -chdir=terraform plan
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/dev'
+        run: terraform -chdir=terraform apply -auto-approve
 
   docker:
     runs-on: ubuntu-latest
-    needs: setup
+    needs: terraform
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -68,9 +106,9 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker buildx build --platform linux/amd64,linux/arm64 -t ${{ env.REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} -f kube/Dockerfile kube/ --push
+          docker buildx build --platform linux/amd64,linux/arm64 -t ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} -f kube/Dockerfile kube/ --push
 
-  terraform:
+  deploy:
     runs-on: ubuntu-latest
     needs: docker
     steps:
@@ -87,42 +125,6 @@ jobs:
         with:
           project_id: ${{ vars.GCP_PROJECT_ID }}
 
-      - name: Install Terraform
-        uses: hashicorp/setup-terraform@v2
-
-      - name: Terraform Format
-        run: terraform -chdir=terraform fmt -check
-
-      - name: Terraform Init
-        run: terraform -chdir=terraform init
-
-      - name: Terraform Validate
-        run: terraform -chdir=terraform validate
-
-      - name: Terraform Plan
-        run: terraform -chdir=terraform plan
-
-      - name: Terraform Apply
-        if: github.ref == 'refs/heads/dev'
-        run: terraform -chdir=terraform apply -auto-approve
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: terraform
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - id: 'auth'
-        uses: 'google-github-actions/auth@v2'
-        with:
-          credentials_json: '${{ secrets.GCP_SA_KEY }}'
-
-      - name: Set up Google Cloud SDK
-        uses: google-github-actions/setup-gcloud@v3
-        with:
-          project_id: ${{ vars.GCP_PROJECT_ID }}
-
       - name: Configure kubectl
         run: |
-          gcloud container clusters get-credentials ${{ vars.GKE_CLUSTER_NAME }} --region ${{ vars.GKE_REGION }} --project ${{ vars.GCP_PROJECT_ID }}
+          gcloud container clusters get-credentials ${{ env.GKE_CLUSTER_NAME }} --region ${{ env.GCP_REGION }} --project ${{ env.GCP_PROJECT_ID }}
