@@ -27,11 +27,11 @@ resource "google_container_cluster" "gke_cluster" {
     owner = "dev-team"
   }
 
-  master_authorized_networks_config {
-    cidr_blocks {
-      cidr_block   = "${data.external.local_ip.result.ip}/32"
-      display_name = "Local IP"
-    }
+  # master_authorized_networks_config {
+  #   cidr_blocks {
+  #     cidr_block   = "${data.external.local_ip.result.ip}/32"
+  #     display_name = "Local IP"
+  #   }
   }
 
   # authenticator_groups_config {
