@@ -59,8 +59,8 @@ jobs:
 
       - name: Authenticate Docker to Google Artifact Registry
         run: |
-          gcloud auth configure-docker gcr.io --quiet
-          docker login -u _json_key --password "${{ secrets.GCP_SA_KEY }}" https://${{ vars.GCP_REGION }}-docker.pkg.dev
+          gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+          docker login -u _json_key --password "${{ secrets.GCP_SA_KEY }}" https://${{ env.REGION }}-docker.pkg.dev
 
       - name: Build Docker image
         run: docker buildx build --platform ${{ vars.PLATFORMS }} -t ${{ env.REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} -f kube/Dockerfile kube/ --push
