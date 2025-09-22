@@ -59,9 +59,9 @@ jobs:
         with:
           project_id: ${{ env.GCP_PROJECT_ID }}
 
-      - name: Install GKE Auth Plugin
-        run: |
-          gcloud components install gke-gcloud-auth-plugin
+      # - name: Install GKE Auth Plugin
+      #   run: |
+      #     gcloud components install gke-gcloud-auth-plugin
 
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v2
