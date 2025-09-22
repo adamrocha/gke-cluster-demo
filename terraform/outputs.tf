@@ -23,7 +23,17 @@ output "load_balancer_ip" {
   value       = kubernetes_service.hello_world_service.status[0].load_balancer[0].ingress[0].ip
 }
 
-output "local_ip" {
-  description = "Local IP address of the machine running Terraform"
-  value       = local.my_ip
+# output "local_ip" {
+#   description = "Local IP address of the machine running Terraform"
+#   value       = local.my_ip
+# }
+
+output "image_state" {
+  description = "GAR Image State"
+  value       = data.external.image_exists.result.exists
+}
+
+output "image_digest" {
+  description = "The digest of the Docker image in Artifact Registry"
+  value       = data.external.image_digest.result["digest"]
 }
