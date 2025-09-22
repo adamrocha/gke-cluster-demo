@@ -32,7 +32,7 @@ resource "google_container_cluster" "gke_cluster" {
   #     cidr_block   = "${data.external.local_ip.result.ip}/32"
   #     display_name = "Local IP"
   #   }
-  }
+  # }
 
   # authenticator_groups_config {
   #   security_group = "gke-security-groups@yourdomain.com"
