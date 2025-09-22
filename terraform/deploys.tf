@@ -39,7 +39,7 @@ resource "kubernetes_service" "hello_world_service" {
 }
 
 resource "kubernetes_deployment" "hello_world" {
-  depends_on = [kubernetes_namespace.hello_world_ns]
+  depends_on = [kubernetes_namespace.hello_world_ns, data.external.image_digest]
   metadata {
     name      = var.deployment
     namespace = var.hello_world_ns
@@ -93,7 +93,7 @@ resource "kubernetes_deployment" "hello_world" {
 
         container {
           name              = var.deployment
-          image             = "us-docker.pkg.dev/${var.project_id}/${var.repo_name}/${var.image_name}:${var.image_tag}@${var.image_digest}"
+          image             = "${var.region}-docker.pkg.dev/${var.project_id}/${var.repo_name}/${var.image_name}:${var.image_tag}@${data.external.image_digest.result["digest"]}"
           image_pull_policy = "Always"
 
           security_context {
