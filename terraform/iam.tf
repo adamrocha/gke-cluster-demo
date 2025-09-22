@@ -1,7 +1,8 @@
 resource "google_project_service" "api_services" {
   for_each = toset([
     "compute.googleapis.com",
-    "container.googleapis.com"
+    "container.googleapis.com",
+    "cloudresourcemanager.googleapis.com"
     //"secretmanager.googleapis.com",
     //"networkmanagement.googleapis.com"
     //"logging.googleapis.com",
@@ -28,7 +29,8 @@ resource "google_project_iam_member" "gke_sa_roles" {
     "roles/container.clusterAdmin",
     "roles/storage.objectViewer",
     "roles/artifactregistry.reader",
-    "roles/container.defaultNodeServiceAccount"
+    "roles/container.defaultNodeServiceAccount",
+    "logging.buckets.update",
   ])
   project = var.project_id
   role    = each.key
