@@ -6,7 +6,7 @@ resource "google_compute_project_metadata" "enable_oslogin" {
   }
 }
 
-data "external" "my_ip" {
+data "external" "local_ip" {
   program = ["bash", "../scripts/fetch-ip.sh"]
 }
 
@@ -29,10 +29,9 @@ resource "google_container_cluster" "gke_cluster" {
 
   master_authorized_networks_config {
     cidr_blocks {
-      cidr_block   = "${data.external.my_ip.result.ip}/32"
-      display_name = "My IP"
+      cidr_block   = "${data.external.local_ip.result.ip}/32"
+      display_name = "Local IP"
     }
-
   }
 
   # authenticator_groups_config {
