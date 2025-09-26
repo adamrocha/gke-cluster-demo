@@ -30,7 +30,9 @@ resource "google_project_iam_member" "gke_sa_roles" {
     "roles/container.clusterAdmin",
     "roles/artifactregistry.reader",
     "roles/storage.objectViewer",
-    "roles/logging.configWriter"
+    "roles/logging.configWriter",
+    "roles/container.admin",
+    "roles/artifactregistry.writer"
   ])
   project = var.project_id
   role    = each.key
