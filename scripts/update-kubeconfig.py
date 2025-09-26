@@ -8,7 +8,7 @@ import sys
 
 PROJECT_ID = "gke-cluster-458701"
 REGION = "us-central1"
-CLUSTER_NAME = "demo-cluster"
+CLUSTER_NAME = "gke-cluster-demo"
 
 def main():
     cmd = [
