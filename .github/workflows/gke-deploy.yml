@@ -42,7 +42,7 @@ jobs:
 
 
 
-  terraform:
+  terraform-apply:
     runs-on: ubuntu-latest
     needs: setup
     steps:
@@ -85,6 +85,28 @@ jobs:
       - name: Terraform Apply
         if: github.ref == 'refs/heads/dev'
         run: terraform -chdir=terraform apply -auto-approve
+
+  deploy:
+    if: github.event_name != 'delete'
+    name: Update Deployment
+    runs-on: ubuntu-latest
+    needs: terraform-apply
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Update GKE Deployment with New Image
+        run: |
+          kubectl set image deployment/hello-world -n hello-world-ns hello-world="$REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/$IMAGE_NAME":"$IMAGE_TAG" --record
+      - name: Verify Kubernetes rollout
+        run: |
+          set -e
+          if ! kubectl rollout status deployment/hello-world -n hello-world-ns --timeout=300s; then
+            echo "Rollout failed, rolling back..."
+            kubectl rollout undo deployment/hello-world -n hello-world-ns
+            echo "::error::Rollback complete. Deployment did not succeed."
+            exit 1
+          fi
+          echo "Rollout succeeded!"
 
   # docker:
   #   runs-on: ubuntu-latest
