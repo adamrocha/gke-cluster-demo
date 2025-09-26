@@ -125,7 +125,7 @@ data "external" "image_digest" {
       IMAGE_TAG="${var.image_tag}"
       
       DIGEST=$(gcloud artifacts docker images list \
-        us-central1-docker.pkg.dev/gke-cluster-458701/hello-world-repo/hello-world \
+        "${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}" \
         --include-tags \
         --filter="tags=$IMAGE_TAG" \
         --format="get(DIGEST)")
