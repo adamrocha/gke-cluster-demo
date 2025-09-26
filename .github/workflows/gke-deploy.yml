@@ -67,7 +67,7 @@ jobs:
         run: terraform -chdir=terraform fmt -check
 
       - name: Terraform Init
-        run: terraform -chdir=terraform init -plugin-dir ~/.terraform.d/plugin-cache
+        run: terraform -chdir=terraform init
 
       - name: Terraform Validate
         run: terraform -chdir=terraform validate
