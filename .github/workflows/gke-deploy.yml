@@ -107,11 +107,9 @@ jobs:
           location: ${{ env.GCP_REGION }}
           project_id: ${{ env.GCP_PROJECT_ID }}
 
-      - name: Install GKE Auth Plugin
-        run: |
-          gcloud components install gke-gcloud-auth-plugin
-          
       - name: Update GKE Deployment with New Image
+        env:
+          USE_GKE_GCLOUD_AUTH_PLUGIN: "True"
         run: |
           set -e
           gcloud container clusters get-credentials ${{ env.GKE_CLUSTER_NAME }} --region ${{ env.GCP_REGION }} --project ${{ env.GCP_PROJECT_ID }}
