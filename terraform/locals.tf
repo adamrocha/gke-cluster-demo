@@ -79,7 +79,7 @@ data "external" "image_exists" {
       IMAGE_TAG="${var.image_tag}"
       
       DIGEST=$(gcloud artifacts docker images list \
-        "${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}" \
+        "$REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/$IMAGE_NAME" \
         --include-tags \
         --filter="tags=$IMAGE_TAG" \
         --format="get(DIGEST)")
@@ -125,7 +125,7 @@ data "external" "image_digest" {
       IMAGE_TAG="${var.image_tag}"
       
       DIGEST=$(gcloud artifacts docker images list \
-        "${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}" \
+        "$REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/$IMAGE_NAME" \
         --include-tags \
         --filter="tags=$IMAGE_TAG" \
         --format="get(DIGEST)")
