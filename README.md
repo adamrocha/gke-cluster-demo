@@ -12,6 +12,7 @@ This project demonstrates how to deploy and manage a Kubernetes cluster on Googl
 - Prometheus Monitoring Stack Deployment
 - Scripts for docker image generation and upload to GAR (Google Artifact Registry). Preveously known as GCR (Google Container Registry).
 - Guidance for authentication and access control
+- Deployable using Github Actions
 
 ## Prerequisites
 
@@ -29,24 +30,13 @@ This project demonstrates how to deploy and manage a Kubernetes cluster on Googl
     cd eks-cluster-demo
     ```
 
-2. **Configure Google Cloud SDK:**
+2. **Create the GKE cluster and deploy manifests:**
     ```sh
-    gcloud init
-    ```
-
-3. **Create the GKE cluster and deploy manifests:**
-    ```sh
-    make tf-bucket
-    make tf-tasks
+    make tf-bootstrap
     make tf-apply
     ```
 
-4. **Deploy workloads on the fly (optional):**
-    ```sh
-    kubectl apply -f manifests/
-    ```
-
-5. **Access the cluster:**
+3. **Access the cluster:**
     ```sh
     kubectl get nodes
     ```
@@ -62,6 +52,6 @@ This project demonstrates how to deploy and manage a Kubernetes cluster on Googl
 ## Cleanup
 
 To delete the EKS cluster and associated resources:
-```sh
+    ```sh
     make tf-destroy
-```
+    ```
