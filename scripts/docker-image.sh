@@ -45,7 +45,7 @@ IMAGE_PATH="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/${IMAGE_NAME}:${IMAGE
 echo "🔎 Checking Artifact Registry for $IMAGE_PATH (gcloud)..."
 if gcloud artifacts docker images describe "$IMAGE_PATH" \
     --project="$PROJECT_ID" >/dev/null 2>&1; then
-  echo "✅ Image $IMAGE_FULL already exists in Artifact Registry."
+  echo "✅ Image $IMAGE_PATH already exists in Artifact Registry."
   exit 0
 else
   echo "ℹ️  Image not found in Artifact Registry via gcloud. Will build and push using Docker..."
