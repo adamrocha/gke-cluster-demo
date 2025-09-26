@@ -112,7 +112,7 @@ jobs:
           USE_GKE_GCLOUD_AUTH_PLUGIN: "True"
         run: |
           set -e
-          gcloud container clusters get-credentials ${{ env.GKE_CLUSTER_NAME }} --region ${{ env.GCP_REGION }} --project ${{ env.GCP_PROJECT_ID }}
+          # gcloud container clusters get-credentials ${{ env.GKE_CLUSTER_NAME }} --region ${{ env.GCP_REGION }} --project ${{ env.GCP_PROJECT_ID }}
           kubectl set image deployment/hello-world -n hello-world-ns hello-world="${{ env.REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}"
       - name: Verify Kubernetes rollout
         run: |
