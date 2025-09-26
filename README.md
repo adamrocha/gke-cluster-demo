@@ -14,13 +14,14 @@ This project demonstrates how to deploy and manage a Kubernetes cluster on Googl
 - Guidance for authentication and access control
 - Deployable using Github Actions
 
-## Prerequisites
+## Tooling
 
 - [Google Cloud SDK](https://cloud.google.com/sdk/docs/install)
 - [Docker](https://docs.docker.com/engine/install/)
 - [kubectl](https://kubernetes.io/docs/tasks/tools/)
 - [helm](https://helm.sh/)
 - [terraform](https://www.terraform.io/)
+- [Github Actions](https://docs.github.com/en/actions)
 
 ## Usage
 
