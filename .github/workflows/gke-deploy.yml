@@ -96,7 +96,9 @@ jobs:
         uses: actions/checkout@v4
       - name: Update GKE Deployment with New Image
         run: |
-          kubectl set image deployment/hello-world -n hello-world-ns hello-world="$REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/$IMAGE_NAME":"$IMAGE_TAG" --record
+          set -e
+          gcloud container clusters get-credentials ${{ env.GKE_CLUSTER_NAME }} --region ${{ env.GCP_REGION }} --project ${{ env.GCP_PROJECT_ID }}
+          kubectl set image deployment/hello-world -n hello-world-ns hello-world="${{ env.REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}" --record
       - name: Verify Kubernetes rollout
         run: |
           set -e
