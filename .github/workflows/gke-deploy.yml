@@ -94,12 +94,15 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - id: 'auth'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
       - name: Update GKE Deployment with New Image
         run: |
           set -e
-          gcloud auth activate-service-account --key-file="${{ secrets.GCP_SA_KEY }}"
-          gcloud config set project ${{ env.GCP_PROJECT_ID }}
-          gcloud config set compute/region ${{ env.GCP_REGION }}
           gcloud container clusters get-credentials ${{ env.GKE_CLUSTER_NAME }} --region ${{ env.GCP_REGION }} --project ${{ env.GCP_PROJECT_ID }}
           kubectl set image deployment/hello-world -n hello-world-ns hello-world="${{ env.REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}" --record
       - name: Verify Kubernetes rollout
