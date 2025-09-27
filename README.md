@@ -6,7 +6,7 @@ This project demonstrates how to deploy and manage a Kubernetes cluster on Googl
 ## Features
 
 - Automated GKE cluster provisioning
-- Deployable using Github Actions
+- Deployable using GitHub Actions
 - Integration with Google Cloud CLI and kubectl
 - Example Kubernetes manifests (Deployments, Services, etc.)
 - Development Vault Deployment
