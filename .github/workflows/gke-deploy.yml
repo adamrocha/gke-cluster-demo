@@ -151,7 +151,7 @@ jobs:
           else
             echo "exists=false" >> $GITHUB_OUTPUT
             echo "gcloud error output:" >&2
-            gcloud artifacts docker images describe "${IMAGE_PATH}:${IMAGE_TAG}" --project="${{ env.GCP_PROJECT_ID }}" 2>&1 > /dev/null >&2
+            gcloud artifacts docker images describe "${IMAGE_PATH}:${IMAGE_TAG}" --project="${{ env.GCP_PROJECT_ID }}"
           fi
       - name: Set up Docker Buildx builder and Build Docker image
         if: steps.image-check.outputs.exists == 'false'
