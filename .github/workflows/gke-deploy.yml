@@ -2,7 +2,7 @@ name: GKE Cluster Demo CI
 
 concurrency:
   group: terraform-${{ github.ref_name }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 on:
   push:
