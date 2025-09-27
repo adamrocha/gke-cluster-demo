@@ -16,7 +16,7 @@ This project demonstrates how to deploy and manage a Kubernetes cluster on Googl
 
 ## Tooling
 
-- [Github Actions](https://docs.github.com/en/actions)
+- [GitHub Actions](https://docs.github.com/en/actions)
 - [terraform](https://www.terraform.io/)
 - [Google Cloud SDK](https://cloud.google.com/sdk/docs/install)
 - [Docker](https://docs.docker.com/engine/install/)
