@@ -138,7 +138,7 @@ jobs:
 
       - name: Authenticate Docker to Google Artifact Registry
         run: |
-          gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+          gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
 
       - name: Check if image tag exists in Artifact Registry
         id: image-check
