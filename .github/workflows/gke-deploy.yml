@@ -83,7 +83,7 @@ jobs:
     if: github.event_name != 'delete'
     name: Update Deployment
     runs-on: ubuntu-latest
-    needs: terraform-apply
+    needs: docker-build
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -118,32 +118,46 @@ jobs:
           fi
           echo "Rollout succeeded!"
 
-  # docker:
-  #   runs-on: ubuntu-latest
-  #   needs: terraform
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
+  docker-build:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    needs: terraform-apply
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-  #     - id: 'auth'
-  #       uses: 'google-github-actions/auth@v2'
-  #       with:
-  #         credentials_json: '${{ secrets.GCP_SA_KEY }}'
+      - id: 'auth'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
 
-  #     - name: Set up Google Cloud SDK
-  #       uses: google-github-actions/setup-gcloud@v3
-  #       with:
-  #         project_id: ${{ vars.GCP_PROJECT_ID }}
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v3
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
 
-  #     - name: Authenticate Docker to Google Artifact Registry
-  #       run: |
-  #         gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+      - name: Authenticate Docker to Google Artifact Registry
+        run: |
+          gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
 
-  #     - name: Set up Docker Buildx builder
-  #       run: |
-  #         docker buildx create --name mybuilder --driver docker-container --use
-  #         docker buildx inspect --bootstrap
+      - name: Check if image tag exists in Artifact Registry
+        id: image-check
+        run: |
+          IMAGE_PATH="${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}"
+          IMAGE_TAG="${{ env.IMAGE_TAG }}"
+          if gcloud artifacts docker images describe "${IMAGE_PATH}:${IMAGE_TAG}" --project="${{ env.GCP_PROJECT_ID }}" > /dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
 
-  #     - name: Build Docker image
-  #       run: |
-  #         docker buildx build --platform linux/amd64,linux/arm64 -t ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} -f kube/Dockerfile kube/ --push
+      - name: Set up Docker Buildx builder
+        if: steps.image-check.outputs.exists == 'false'
+        run: |
+          docker buildx create --name mybuilder --driver docker-container --use
+          docker buildx inspect --bootstrap
+
+      - name: Build Docker image
+        if: steps.image-check.outputs.exists == 'false'
+        run: |
+          docker buildx build --platform linux/amd64,linux/arm64 -t ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} -f kube/Dockerfile kube/ --push
