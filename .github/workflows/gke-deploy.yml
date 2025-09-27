@@ -154,13 +154,9 @@ jobs:
             cat "$ERROR_LOG" >&2
           fi
           rm -f "$ERROR_LOG"
-      - name: Set up Docker Buildx builder
+      - name: Set up Docker Buildx builder and Build Docker image
         if: steps.image-check.outputs.exists == 'false'
         run: |
           docker buildx create --name mybuilder --driver docker-container --use
           docker buildx inspect --bootstrap
-
-      - name: Build Docker image
-        if: steps.image-check.outputs.exists == 'false'
-        run: |
           docker buildx build --platform linux/amd64,linux/arm64 -t ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} -f kube/Dockerfile kube/ --push
