@@ -145,15 +145,14 @@ jobs:
         run: |
           IMAGE_PATH="${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}"
           IMAGE_TAG="${{ env.IMAGE_TAG }}"
-          ERROR_LOG=$(mktemp)
-          if gcloud artifacts docker images describe "${IMAGE_PATH}:${IMAGE_TAG}" --project="${{ env.GCP_PROJECT_ID }}" > /dev/null 2> "$ERROR_LOG"; then
+          ERROR_LOG=$(gcloud artifacts docker images describe "${IMAGE_PATH}:${IMAGE_TAG}" --project="${{ env.GCP_PROJECT_ID }}" > /dev/null 2>&1; echo $?)
+          if [ "$ERROR_LOG" -eq 0 ]; then
             echo "exists=true" >> $GITHUB_OUTPUT
           else
             echo "exists=false" >> $GITHUB_OUTPUT
             echo "gcloud error output:" >&2
-            cat "$ERROR_LOG" >&2
+            gcloud artifacts docker images describe "${IMAGE_PATH}:${IMAGE_TAG}" --project="${{ env.GCP_PROJECT_ID }}" 2>&1 > /dev/null >&2
           fi
-          rm -f "$ERROR_LOG"
       - name: Set up Docker Buildx builder and Build Docker image
         if: steps.image-check.outputs.exists == 'false'
         run: |
