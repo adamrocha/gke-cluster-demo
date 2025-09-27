@@ -76,7 +76,7 @@ jobs:
         run: terraform -chdir=terraform plan
 
       - name: Terraform Apply (dev only)
-        if: github.ref == 'refs/heads/dev'
+        # if: github.ref == 'refs/heads/dev'
         run: terraform -chdir=terraform apply -auto-approve
 
   deploy:
