@@ -6,22 +6,22 @@ This project demonstrates how to deploy and manage a Kubernetes cluster on Googl
 ## Features
 
 - Automated GKE cluster provisioning
+- Deployable using GitHub Actions
 - Integration with Google Cloud CLI and kubectl
 - Example Kubernetes manifests (Deployments, Services, etc.)
 - Development Vault Deployment
 - Prometheus Monitoring Stack Deployment
 - Scripts for docker image generation and upload to GAR (Google Artifact Registry). Previously known as GCR (Google Container Registry).
 - Guidance for authentication and access control
-- Deployable using Github Actions
 
 ## Tooling
 
+- [GitHub Actions](https://docs.github.com/en/actions)
+- [terraform](https://www.terraform.io/)
 - [Google Cloud SDK](https://cloud.google.com/sdk/docs/install)
 - [Docker](https://docs.docker.com/engine/install/)
 - [kubectl](https://kubernetes.io/docs/tasks/tools/)
 - [helm](https://helm.sh/)
-- [terraform](https://www.terraform.io/)
-- [Github Actions](https://docs.github.com/en/actions)
 
 ## Usage
 

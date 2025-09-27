@@ -2,7 +2,7 @@ name: GKE Cluster Demo CI
 
 concurrency:
   group: terraform-${{ github.ref_name }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 on:
   push:
@@ -75,8 +75,8 @@ jobs:
       - name: Terraform Plan
         run: terraform -chdir=terraform plan
 
-      - name: Terraform Apply (dev only)
-        if: github.ref == 'refs/heads/dev'
+      - name: Terraform Apply
+        # if: github.ref == 'refs/heads/dev'
         run: terraform -chdir=terraform apply -auto-approve
 
   deploy:
