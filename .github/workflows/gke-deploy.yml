@@ -19,7 +19,7 @@ env:
   GCP_REGION: ${{ vars.GCP_REGION }}
   IMAGE_NAME: hello-world
   REPO_NAME: hello-world-repo
-  IMAGE_TAG: 1.2.2
+  IMAGE_TAG: 1.2.3
   REGION: us-central1
 
 jobs:
