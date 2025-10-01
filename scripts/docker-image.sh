@@ -30,7 +30,7 @@ if ! gcloud artifacts repositories describe "$REPO" \
   gcloud artifacts repositories create "$REPO" \
     --repository-format=docker \
     --location="$REGION" \
-    --project="$PROJECT_ID" || true
+    --project="$PROJECT_ID"
 fi
 
 # ------------------------------------------------------------
