@@ -9,6 +9,7 @@ on:
     branches: [main, stage, dev]
   pull_request:
     branches: [main, stage, dev]
+  delete:
 
 permissions:
   contents: read
@@ -23,6 +24,11 @@ env:
 
 jobs:
   terraform-apply:
+    if: github.event_name != 'delete'
+    name: Terraform GKE Cluster Deployment
+    defaults:
+      run:
+        shell: bash
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
