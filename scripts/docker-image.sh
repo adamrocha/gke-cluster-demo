@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # Build and push hello-world Docker image to Google Artifact Registry (GAR)
-# Supports multi-platform builds, auto-creates repo, installs/updates docker-credential-gcr,
-# and checks image existence using docker pull (works for multi-arch)
+# Supports multi-platform builds, auto-creates repo, installs/updates docker-credential-gcr
 
 set -euo pipefail
 
@@ -64,10 +63,10 @@ if ! docker buildx version &> /dev/null; then
 fi
 
 # Ensure buildx builder exists
-if ! docker buildx inspect multiarch >/dev/null 2>&1; then
-  docker buildx create --name multiarch --use
+if ! docker buildx inspect mybuilder >/dev/null 2>&1; then
+  docker buildx create --name mybuilder --driver docker-container --use
 else
-  docker buildx use multiarch
+  docker buildx use mybuilder
 fi
 
 # ------------------------------------------------------------
@@ -82,8 +81,13 @@ fi
 #     brew install docker-credential-helper
 # fi
 
-# echo "🔑 Configuring docker credential helper for GAR..."
-# gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+echo "🔑 Configuring docker credential helper for GAR..."
+
+if ! command -v docker-credential-gcr >/dev/null 2>&1; then
+  gcloud components install docker-credential-gcr --quiet
+fi
+
+gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
 
 # ------------------------------------------------------------
 # Build + Push
