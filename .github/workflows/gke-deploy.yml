@@ -78,6 +78,41 @@ jobs:
         # if: github.ref == 'refs/heads/dev'
         run: terraform -chdir=terraform apply -auto-approve
 
+  check_condition:
+    if: github.event_name == 'delete'
+    uses: ./.github/workflows/destroy-logic.yml
+    with:
+      branch_prefixes: "feature/,fix/,chore/"
+  destroy:
+    name: Terraform Destroy on Branch Delete
+    runs-on: ubuntu-latest
+    needs: check_condition
+    if: needs.check_condition.outputs.should_destroy == 'true'
+    # environment:
+    #   name: destroy-approval
+    defaults:
+      run:
+        shell: bash
+        # working-directory: terraform
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.13.1"
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Terraform Init
+        run: terraform -chdir=terraform init
+
+      - name: Terraform Destroy
+        run: terraform -chdir=terraform destroy -auto-approve -input=false
+
   deploy:
     if: github.event_name != 'delete'
     name: Update Deployment
