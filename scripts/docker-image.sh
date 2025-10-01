@@ -31,6 +31,8 @@ if ! gcloud artifacts repositories describe "$REPO" \
     --repository-format=docker \
     --location="$REGION" \
     --project="$PROJECT_ID"
+else
+  echo "✅ Artifact Registry repo $REPO exists."
 fi
 
 # ------------------------------------------------------------
