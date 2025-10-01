@@ -134,7 +134,7 @@ jobs:
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v3
         with:
-          project_id: ${{ vars.GCP_PROJECT_ID }}
+          project_id: ${{ env.GCP_PROJECT_ID }}
 
       - name: Authenticate Docker to Google Artifact Registry
         run: |
@@ -153,6 +153,8 @@ jobs:
       - name: Set up Docker Buildx builder and Build Docker image
         if: steps.image-check.outputs.exists == 'false'
         run: |
-          docker buildx create --name mybuilder --driver docker-container --use
+          if ! docker buildx inspect mybuilder >/dev/null 2>&1; then
+            docker buildx create --name mybuilder --driver docker-container --use
+          fi
           docker buildx inspect --bootstrap
           docker buildx build --platform linux/amd64,linux/arm64 -t ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} -f kube/Dockerfile kube/ --push
