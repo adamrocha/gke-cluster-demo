@@ -99,3 +99,9 @@ variable "deployment" {
   default     = "hello-world"
   type        = string
 }
+
+variable "platforms" {
+  description = "Platforms for Docker buildx"
+  default     = ["linux/amd64", "linux/arm64"]
+  type        = list(string)
+}
