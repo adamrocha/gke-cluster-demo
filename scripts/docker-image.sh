@@ -45,7 +45,7 @@ else
   echo "PLATFORMS is $PLATFORMS"
 fi
 
-export PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
 
 cd "${PROJECT_ROOT}/kube/" || exit 1
 
