@@ -27,7 +27,10 @@ if ! gcloud artifacts repositories describe "$REPO_NAME" \
   echo "📦 Creating Artifact Registry repo: $REPO_NAME..."
   gcloud artifacts repositories create "$REPO_NAME" \
     --location="$REGION" \
-    --project="$PROJECT_ID"
+    --project="$PROJECT_ID" \
+    --repository-format=docker \
+    --description="Docker repository for $IMAGE_NAME"
+  echo "✅ Artifact Registry repo $REPO_NAME created."
 else
   echo "✅ Artifact Registry repo $REPO_NAME already exists."
 fi
