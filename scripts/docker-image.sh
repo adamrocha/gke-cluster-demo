@@ -7,12 +7,19 @@ set -euo pipefail
 # ------------------------------------------------------------
 # Config
 # ------------------------------------------------------------
-PROJECT_ID="gke-cluster-458701"
-REGION="us-central1"
-REPO_NAME="hello-world-repo"
-IMAGE_NAME="hello-world"
-IMAGE_TAG="1.2.2"
-PLATFORMS="linux/amd64,linux/arm64"
+# PROJECT_ID="gke-cluster-458701"
+# REGION="us-central1"
+# REPO_NAME="hello-world-repo"
+# IMAGE_NAME="hello-world"
+# IMAGE_TAG="1.2.2"
+# PLATFORMS="linux/amd64,linux/arm64"
+
+echo "PROJECT_ID is $PROJECT_ID"
+echo "REGION is $REGION"
+echo "REPO_NAME is $REPO_NAME"
+echo "IMAGE_NAME is $IMAGE_NAME"
+echo "IMAGE_TAG is $IMAGE_TAG"
+echo "PLATFORMS is $PLATFORMS"
 
 export PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
 
