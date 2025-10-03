@@ -14,37 +14,23 @@ set -euo pipefail
 # IMAGE_TAG="1.2.2"
 # PLATFORMS="linux/amd64,linux/arm64"
 
-if [[ -z "${PROJECT_ID:-}" ]]; then
-  echo "Warning: PROJECT_ID is not set."
-else
-  echo "PROJECT_ID is $PROJECT_ID"
-fi
-if [[ -z "${REGION:-}" ]]; then
-  echo "Warning: REGION is not set."
-else
-  echo "REGION is $REGION"
-fi
-if [[ -z "${REPO_NAME:-}" ]]; then
-  echo "Warning: REPO_NAME is not set."
-else
-  echo "REPO_NAME is $REPO_NAME"
-fi
-if [[ -z "${IMAGE_NAME:-}" ]]; then
-  echo "Warning: IMAGE_NAME is not set."
-else
-  echo "IMAGE_NAME is $IMAGE_NAME"
-fi
-if [[ -z "${IMAGE_TAG:-}" ]]; then
-  echo "Warning: IMAGE_TAG is not set."
-else
-  echo "IMAGE_TAG is $IMAGE_TAG"
-fi
-if [[ -z "${PLATFORMS:-}" ]]; then
-  echo "Warning: PLATFORMS is not set."
-else
-  echo "PLATFORMS is $PLATFORMS"
-fi
+# Function to validate environment variables
+validate_env_var() {
+  local var_name="$1"
+  local var_value="${!var_name}"
+  if [[ -z "${var_value}" ]]; then
+    echo "Warning: ${var_name} is not set."
+  else
+    echo "${var_name} is ${var_value}"
+  fi
+}
 
+validate_env_var "PROJECT_ID"
+validate_env_var "REGION"
+validate_env_var "REPO_NAME"
+validate_env_var "IMAGE_NAME"
+validate_env_var "IMAGE_TAG"
+validate_env_var "PLATFORMS"
 PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
 
 cd "${PROJECT_ROOT}/kube/" || exit 1
