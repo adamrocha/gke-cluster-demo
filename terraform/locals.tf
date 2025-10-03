@@ -100,6 +100,14 @@ resource "null_resource" "image_build" {
     data.external.image_exists
   ]
   provisioner "local-exec" {
+    environment = {
+      PROJECT_ID = var.project_id
+      REGION     = var.region
+      REPO_NAME  = var.repo_name
+      IMAGE_NAME = var.image_name
+      IMAGE_TAG  = var.image_tag
+      PLATFORMS  = join(",", var.platforms)
+    }
     command     = <<EOT
       if [ "${data.external.image_exists.result.exists}" = "false" ]; then
         ../scripts/docker-image.sh
