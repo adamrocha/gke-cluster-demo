@@ -7,14 +7,31 @@ set -euo pipefail
 # ------------------------------------------------------------
 # Config
 # ------------------------------------------------------------
-PROJECT_ID="gke-cluster-458701"
-REGION="us-central1"
-REPO_NAME="hello-world-repo"
-IMAGE_NAME="hello-world"
-IMAGE_TAG="1.2.2"
-PLATFORMS="linux/amd64,linux/arm64"
-PROJECT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
-export PROJECT_ROOT
+# PROJECT_ID="gke-cluster-458701"
+# REGION="us-central1"
+# REPO_NAME="hello-world-repo"
+# IMAGE_NAME="hello-world"
+# IMAGE_TAG="1.2.2"
+# PLATFORMS="linux/amd64,linux/arm64"
+
+# Function to validate environment variables
+validate_env_var() {
+  local var_name="$1"
+  local var_value="${!var_name}"
+  if [[ -z "${var_value}" ]]; then
+    echo "Warning: ${var_name} is not set."
+  else
+    echo "${var_name} is ${var_value}"
+  fi
+}
+
+validate_env_var "PROJECT_ID"
+validate_env_var "REGION"
+validate_env_var "REPO_NAME"
+validate_env_var "IMAGE_NAME"
+validate_env_var "IMAGE_TAG"
+validate_env_var "PLATFORMS"
+PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
 
 cd "${PROJECT_ROOT}/kube/" || exit 1
 
@@ -52,6 +69,16 @@ else
 fi
 
 # ------------------------------------------------------------
+# Ensure docker credential helper
+# ------------------------------------------------------------
+echo "🔑 Configuring docker credential helper for GAR..."
+if ! command -v docker-credential-gcr >/dev/null 2>&1; then
+  gcloud components install docker-credential-gcr --quiet
+fi
+
+gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+
+# ------------------------------------------------------------
 # Verify Docker + Buildx
 # ------------------------------------------------------------
 if ! command -v docker &> /dev/null; then
@@ -69,16 +96,6 @@ if ! docker buildx inspect mybuilder >/dev/null 2>&1; then
 else
   docker buildx use mybuilder
 fi
-
-# ------------------------------------------------------------
-# Ensure docker credential helper
-# ------------------------------------------------------------
-echo "🔑 Configuring docker credential helper for GAR..."
-if ! command -v docker-credential-gcr >/dev/null 2>&1; then
-  gcloud components install docker-credential-gcr --quiet
-fi
-
-gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
 
 # ------------------------------------------------------------
 # Build + Push
