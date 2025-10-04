@@ -60,7 +60,7 @@ variable "image_name" {
 
 variable "image_tag" {
   description = "Docker image tag"
-  default     = "1.2.2"
+  default     = "1.2.5"
   type        = string
 }
 
