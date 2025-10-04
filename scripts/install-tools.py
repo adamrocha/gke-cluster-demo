@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """
-Replicates install-tools.sh logic in Python.
 Installs required tools for GKE/Terraform demo on macOS or Linux.
 """
 
