@@ -81,6 +81,7 @@ def ensure_helm():
     if not shutil.which("helm") and OS_TYPE == "Linux":
         run("curl -fsSL https://baltocdn.com/helm/signing.asc | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg")
         run('echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list')
+        apt_update_once()
 
 def ensure_hashicorp_repo():
     if OS_TYPE == "Linux" and not os.path.exists("/etc/apt/sources.list.d/hashicorp.list"):
