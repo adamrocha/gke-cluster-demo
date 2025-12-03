@@ -68,6 +68,10 @@ variable "image_digest" {
   description = "Digest of the Docker image to be used in the deployment"
   default     = ""
   type        = string
+  validation {
+    condition     = length(var.image_digest) > 0
+    error_message = "The image_digest variable must not be empty. Please provide a valid Docker image digest."
+  }
 }
 
 variable "hello_world_ns" {
