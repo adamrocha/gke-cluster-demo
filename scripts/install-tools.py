@@ -70,7 +70,7 @@ def ensure_gcloud():
             install_package("curl")
             run("curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg")
             run('echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee /etc/apt/sources.list.d/google-cloud-sdk.list')
-            run("sudo apt-get update")
+            apt_update_once()
             run("sudo apt-get install -y google-cloud-cli")
         elif OS_TYPE == "Darwin":
             run("brew install google-cloud-cli")
