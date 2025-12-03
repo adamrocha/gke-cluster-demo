@@ -100,7 +100,7 @@ resource "null_resource" "image_build" {
     data.external.image_exists
   ]
   triggers = {
-    image_tag  = var.image_tag
+    image_tag = var.image_tag
   }
   provisioner "local-exec" {
     environment = {
