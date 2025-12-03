@@ -17,11 +17,11 @@ This project demonstrates how to deploy and manage a Kubernetes cluster on Googl
 ## Tooling
 
 - [GitHub Actions](https://docs.github.com/en/actions)
-- [terraform](https://www.terraform.io/)
+- [Terraform](https://www.terraform.io/)
 - [Google Cloud SDK](https://cloud.google.com/sdk/docs/install)
 - [Docker](https://docs.docker.com/engine/install/)
-- [kubectl](https://kubernetes.io/docs/tasks/tools/)
-- [helm](https://helm.sh/)
+- [Kubectl](https://kubernetes.io/docs/tasks/tools/)
+- [Helm](https://helm.sh/)
 
 ## Usage
 
@@ -33,6 +33,7 @@ cd gke-cluster-demo
 
 2. **Create the GKE cluster and deploy manifests:**
 ```sh
+make install-tools
 make tf-bootstrap
 make tf-apply
 ```
@@ -45,13 +46,13 @@ kubectl get nodes
 ## Tools Used
 
 - **Terraform**: GCP infrastructure provisioning.
-- **gcloud**: Google Cloud CLI.
-- **helm**: Kubernetes package manager.
-- **kubectl**: Command-line tool for interacting with Kubernetes clusters.
+- **Gcloud**: Google Cloud CLI.
+- **Helm**: Kubernetes package manager.
+- **Kubectl**: Command-line tool for interacting with Kubernetes clusters.
 
 ## Cleanup
 
-To delete the GKE cluster and associated resources:
+To destroy the GKE cluster and associated resources:
 ```sh
 make tf-destroy
 ```

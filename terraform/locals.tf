@@ -99,6 +99,9 @@ resource "null_resource" "image_build" {
     google_artifact_registry_repository.repo,
     data.external.image_exists
   ]
+  triggers = {
+    image_tag = var.image_tag
+  }
   provisioner "local-exec" {
     environment = {
       PROJECT_ID = var.project_id
