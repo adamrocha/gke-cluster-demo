@@ -107,8 +107,6 @@ def main():
     ensure_command("jq")
     ensure_command("docker-buildx", "docker")
     ensure_command("pass")
-    ensure_command("helm")
-    ensure_command("kubectl")
     install_hashicorp_tool("terraform")
     install_hashicorp_tool("vault")
 
