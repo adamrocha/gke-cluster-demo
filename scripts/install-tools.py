@@ -54,7 +54,9 @@ def install_hashicorp_tool(tool):
             ensure_hashicorp_repo()
             apt_update_once()
             install_package(tool)
-
+        else:
+            print(f"Unsupported OS for installing {tool}: {OS_TYPE}")
+            sys.exit(1)
 def ensure_command(cmd, pkg=None):
     if not shutil.which(cmd):
         install_package(pkg or cmd)
