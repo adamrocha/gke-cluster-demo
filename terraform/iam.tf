@@ -26,7 +26,7 @@ resource "google_project_iam_member" "gke_sa_roles" {
     "roles/container.defaultNodeServiceAccount",
     "roles/artifactregistry.admin",
     "roles/artifactory.writer",
-    "Roles/artifactory.reader",
+    "roles/artifactory.reader",
     "roles/storage.objectViewer",
     "roles/logging.logWriter",
     "roles/monitoring.metricWriter"
