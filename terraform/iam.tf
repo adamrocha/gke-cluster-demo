@@ -23,12 +23,19 @@ resource "google_service_account" "gke_service_account" {
 
 resource "google_project_iam_member" "gke_sa_roles" {
   for_each = toset([
-    "roles/compute.admin",
+    "roles/artifactory.writer",
+    "roles/artifactory.reader",
+    "roles/container.clusterAdmin",
     "roles/container.admin",
-    "roles/artifactregistry.admin",
+    "roles/compute.networkAdmin",
+    "roles/logging.logWriter",
     "roles/storage.admin",
-    "roles/iam.serviceAccountAdmin",
-    "roles/servicenetworking.networksAdmin"
+    "roles/storage.objectAdmin",
+    "roles/storage.objectCreator",
+    "roles/storage.objectViewer",
+    "roles/artifactregistry.admin",
+    "roles/monitoring.metricWriter",
+    "roles/container.defaultNodeServiceAccount"
   ])
   project = var.project_id
   role    = each.key
