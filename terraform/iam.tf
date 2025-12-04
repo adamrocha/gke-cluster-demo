@@ -3,8 +3,8 @@ resource "google_project_service" "api_services" {
     "compute.googleapis.com",
     "container.googleapis.com",
     "cloudresourcemanager.googleapis.com",
-    "artifactregistry.googleapis.com",      # ADD THIS
-    "storage-api.googleapis.com" 
+    "artifactregistry.googleapis.com", # ADD THIS
+    "storage-api.googleapis.com"
     //"secretmanager.googleapis.com",
     //"networkmanagement.googleapis.com"
     //"logging.googleapis.com",
