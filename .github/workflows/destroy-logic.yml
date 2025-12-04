@@ -1,0 +1,38 @@
+name: Check Destroy Condition
+
+permissions:
+  contents: read
+
+on:
+  workflow_call:
+    inputs:
+      branch_prefixes:
+        description: "Comma-separated branch prefixes that qualify for destroy"
+        required: false
+        type: string
+        default: "feature/,fix/,chore/"
+    outputs:
+      should_destroy:
+        description: "True if branch deletion should trigger Terraform destroy"
+        value: ${{ jobs.check.outputs.should_destroy }}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      should_destroy: ${{ steps.set.outputs.destroy }}
+    steps:
+      - id: set
+        run: |
+          prefixes="${{ inputs.branch_prefixes }}"
+          destroy=false
+
+          # Check for branch deletion and not main, stage, or dev
+          if [ "${{ github.event_name }}" = "delete" ] && [ "${{ github.event.ref_type }}" = "branch" ]; then
+            branch="${{ github.event.ref }}"
+            if [[ "$branch" != "main" && "$branch" != "stage" && "$branch" != "dev" ]]; then
+              destroy=true
+            fi
+          fi
+
+          echo "destroy=$destroy" >> $GITHUB_OUTPUT

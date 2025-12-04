@@ -1,4 +1,4 @@
-FROM nginx:alpine
+FROM nginx:1.28.0-alpine-slim
 
 # Create a non-root user and group
 RUN addgroup -S -g 10001 appgroup && \
