@@ -24,7 +24,7 @@ variable "environment" {
 
 variable "cluster_name" {
   description = "The name of the GKE cluster."
-  default     = "demo-cluster"
+  default     = "gke-cluster-demo"
   type        = string
 }
 
@@ -60,14 +60,18 @@ variable "image_name" {
 
 variable "image_tag" {
   description = "Docker image tag"
-  default     = "1.2.2"
+  default     = "1.2.5"
   type        = string
 }
 
 variable "image_digest" {
   description = "Digest of the Docker image to be used in the deployment"
-  default     = "sha256:cf7df76bcd16d5bb58cf482492e97e0c3fc897494f7a60a05ca84dcee5eb0ed8"
+  default     = ""
   type        = string
+  # validation {
+  #   condition     = length(var.image_digest) > 0
+  #   error_message = "The image_digest variable must not be empty. Please provide a valid Docker image digest."
+  # }
 }
 
 variable "hello_world_ns" {
@@ -98,4 +102,10 @@ variable "deployment" {
   description = "Name of the Kubernetes deployment"
   default     = "hello-world"
   type        = string
+}
+
+variable "platforms" {
+  description = "Platforms for Docker buildx"
+  default     = ["linux/amd64", "linux/arm64"]
+  type        = list(string)
 }
