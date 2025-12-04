@@ -25,8 +25,6 @@ resource "google_project_iam_member" "gke_sa_roles" {
   for_each = toset([
     "roles/container.defaultNodeServiceAccount",
     "roles/artifactregistry.admin",
-    "roles/artifactory.writer",
-    "roles/artifactory.reader",
     "roles/storage.objectViewer",
     "roles/logging.logWriter",
     "roles/monitoring.metricWriter"
