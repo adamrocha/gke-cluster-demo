@@ -1,14 +1,14 @@
 terraform {
-  required_version = ">= 1.13.0"
+  required_version = ">= 1.14.0"
 
   required_providers {
     google = {
       source  = "hashicorp/google"
-      version = "~> 5.45"
+      version = "~> 7.12"
     }
     google-beta = {
       source  = "hashicorp/google-beta"
-      version = "~> 7.0"
+      version = "~> 7.12"
     }
     kubernetes = {
       source  = "hashicorp/kubernetes"
@@ -16,7 +16,7 @@ terraform {
     }
     helm = {
       source  = "hashicorp/helm"
-      version = "~> 3.0"
+      version = "~> 3.1"
     }
     http = {
       source  = "hashicorp/http"
@@ -28,7 +28,7 @@ terraform {
     }
     vault = {
       source  = "hashicorp/vault"
-      version = "~> 5.2"
+      version = "~> 5.5"
     }
     external = {
       source  = "hashicorp/external"
