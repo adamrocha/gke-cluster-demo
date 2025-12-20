@@ -6,9 +6,9 @@ concurrency:
 
 on:
   push:
-    branches: [main, stage, dev]
+    branches: [main, stage]
   pull_request:
-    branches: [main, stage, dev]
+    branches: [main, stage]
   delete:
 
 permissions:
