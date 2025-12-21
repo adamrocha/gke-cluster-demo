@@ -2,17 +2,17 @@ name: GKE Cluster Demo CI
 
 concurrency:
   group: terraform-${{ github.ref_name }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 on:
   push:
     branches: [main, stage, dev]
-  pull_request:
-    branches: [main, stage, dev]
+  # pull_request:
+  #   branches: [main, stage, dev]
   delete:
 
 permissions:
-  contents: read
+  contents: write
 
 env:
   GKE_CLUSTER_NAME: ${{ vars.GKE_CLUSTER_NAME }}
@@ -90,8 +90,8 @@ jobs:
   check_condition:
     if: github.event_name == 'delete'
     uses: ./.github/workflows/destroy-logic.yml
-    with:
-      branch_prefixes: "feature/,fix/,chore/"
+    # with:
+    #   branch_prefixes: "feature/,fix/,chore/"
   destroy:
     name: Terraform Destroy on Branch Delete
     runs-on: ubuntu-latest
