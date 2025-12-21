@@ -99,11 +99,13 @@ add-labels:
 		--update-labels=environment=terraform,purpose=state-storage
 
 nuke-tf-bucket:
-	@echo "⚠️  This will delete the bucket: $(BUCKET_NAME)"
+	@echo "⚠️  WARNING: This will permanently delete the bucket: $(BUCKET_NAME)"
 	@read -p "Are you sure? (y/N): " confirm; \
 	if [ "$$confirm" = "y" ]; then \
-		echo "🔄 Deleting contents..."; \
-		gsutil -m rm -r gs://$(BUCKET_NAME) || true; \
+		echo "🔄 Deleting bucket contents and bucket..."; \
+		gcloud storage rm --recursive gs://$(BUCKET_NAME)/** || true; \
+		gcloud storage buckets delete gs://$(BUCKET_NAME) --quiet || true; \
+		echo "✅ Bucket deleted."; \
 	else \
 		echo "❎ Aborted."; \
 	fi
