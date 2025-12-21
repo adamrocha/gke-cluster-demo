@@ -59,18 +59,6 @@ tf-state:
 	@echo "✅ Terraform state listed."
 	@echo "🔍 To view specific resource, run 'terraform state show <resource_name>'."
 
-delete-artifact-repo:
-	@echo "⚠️  WARNING: This will permanently delete the Artifact Registry repository: $(REPO_NAME)"
-	@read -p "Are you sure? (y/N): " confirm; \
-	if [ "$$confirm" = "y" ]; then \
-		echo "🗑️  Deleting repository $(REPO_NAME) from $(REPO_LOCATION) in project $(GCP_PROJECT)..."; \
-		gcloud artifacts repositories delete $(REPO_NAME) \
-			--location=$(REPO_LOCATION) \
-			--project=$(GCP_PROJECT) --quiet; \
-	else \
-		echo "❌ Deletion cancelled."; \
-	fi
-
 tf-bucket: create-bucket enable-versioning set-lifecycle add-labels
 	@echo "✅ GCS bucket created and configured for Terraform state."
 
@@ -97,6 +85,18 @@ add-labels:
 	@echo "🏷️  Adding labels..."
 	gcloud storage buckets update gs://$(BUCKET_NAME) \
 		--update-labels=environment=terraform,purpose=state-storage
+
+delete-artifact-repo:
+	@echo "⚠️  WARNING: This will permanently delete the Artifact Registry repository: $(REPO_NAME)"
+	@read -p "Are you sure? (y/N): " confirm; \
+	if [ "$$confirm" = "y" ]; then \
+		echo "🗑️  Deleting repository $(REPO_NAME) from $(REPO_LOCATION) in project $(GCP_PROJECT)..."; \
+		gcloud artifacts repositories delete $(REPO_NAME) \
+			--location=$(REPO_LOCATION) \
+			--project=$(GCP_PROJECT) --quiet; \
+	else \
+		echo "❌ Deletion cancelled."; \
+	fi
 
 nuke-tf-bucket:
 	@echo "⚠️  WARNING: This will permanently delete the bucket: $(BUCKET_NAME)"
