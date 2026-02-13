@@ -10,7 +10,7 @@ resource "google_compute_project_metadata" "enable_oslogin" {
 #   program = ["bash", "../scripts/fetch-ip.sh"]
 # }
 
-resource "google_container_cluster" "gke_cluster" {
+resource "google_container_cluster" "gke_cluster_demo" {
   # checkov:skip=CKV_GCP_69: enabled at the node pool level
   depends_on                  = [google_project_service.api_services]
   description                 = "Managed GKE cluster"
@@ -25,6 +25,7 @@ resource "google_container_cluster" "gke_cluster" {
   resource_labels = {
     env   = "dev"
     owner = "dev-team"
+    managed_by = "terraform"
   }
 
   # master_authorized_networks_config {
@@ -55,7 +56,7 @@ resource "google_container_cluster" "gke_cluster" {
   }
 
   network_policy {
-    enabled  = true
+    enabled  = false
     provider = "CALICO"
   }
 
@@ -93,10 +94,10 @@ resource "google_container_cluster" "gke_cluster" {
   }
 }
 
-resource "google_container_node_pool" "gke_pool" {
-  depends_on         = [google_container_cluster.gke_cluster]
-  name               = "demo-pool"
-  cluster            = google_container_cluster.gke_cluster.name
+resource "google_container_node_pool" "node_pool_demo" {
+  depends_on         = [google_container_cluster.gke_cluster_demo]
+  name               = "node-pool-demo"
+  cluster            = google_container_cluster.gke_cluster_demo.name
   initial_node_count = 1
 
   autoscaling {
@@ -118,18 +119,18 @@ resource "google_container_node_pool" "gke_pool" {
 
     shielded_instance_config {
       enable_secure_boot          = true
-      enable_integrity_monitoring = true
+      enable_integrity_monitoring = false
     }
-    /*
-    metadata = {
-      ssh-keys = "gke-user:${tls_private_key.gke_ssh.public_key_openssh}"
-    }
-    */
+
+    # metadata = {
+    #   ssh-keys = "gke-user:${tls_private_key.gke_ssh.public_key_openssh}"
+    # }
 
     tags = ["gke-node"]
     labels = {
       env   = "dev"
       owner = "dev-team"
+      managed_by = "terraform"
     }
   }
 
@@ -140,7 +141,7 @@ resource "google_container_node_pool" "gke_pool" {
 
   upgrade_settings {
     max_surge       = 1
-    max_unavailable = 0
+    max_unavailable = 1
   }
 
   lifecycle {

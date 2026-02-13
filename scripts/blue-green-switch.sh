@@ -9,7 +9,7 @@ SERVICE="hello-world-service"
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-BLUE='\033[0;34m'
+# BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 get_current_version() {
@@ -26,9 +26,11 @@ check_deployment_ready() {
         return 1
     fi
     
-    local ready=$(kubectl get deployment "$deployment" -n "$NAMESPACE" \
+    local ready 
+    ready=$(kubectl get deployment "$deployment" -n "$NAMESPACE" \
         -o jsonpath='{.status.readyReplicas}' 2>/dev/null || echo "0")
-    local desired=$(kubectl get deployment "$deployment" -n "$NAMESPACE" \
+    local desired
+    desired=$(kubectl get deployment "$deployment" -n "$NAMESPACE" \
         -o jsonpath='{.spec.replicas}' 2>/dev/null || echo "0")
     
     if [ "$ready" = "$desired" ] && [ "$ready" != "0" ]; then
@@ -41,7 +43,8 @@ check_deployment_ready() {
 
 switch_to() {
     local target_version=$1
-    local current_version=$(get_current_version)
+    local current_version
+    current_version=$(get_current_version)
     
     echo "🔄 Current version: $current_version"
     echo "🎯 Target version: $target_version"
@@ -60,7 +63,8 @@ switch_to() {
     
     # Wait a moment and verify
     sleep 2
-    local new_version=$(get_current_version)
+    local new_version
+    new_version=$(get_current_version)
     if [ "$new_version" = "$target_version" ]; then
         echo -e "${GREEN}✓${NC} Switch verified successfully"
     else
@@ -74,7 +78,8 @@ show_status() {
     echo "================================"
     echo ""
     
-    local current=$(get_current_version)
+    local current
+    current=$(get_current_version)
     echo "🎯 Active version: $current"
     echo ""
     
@@ -95,7 +100,8 @@ show_status() {
 }
 
 rollback() {
-    local current=$(get_current_version)
+    local current
+    current=$(get_current_version)
     local target=""
     
     if [ "$current" = "blue" ]; then
