@@ -25,7 +25,7 @@ data "google_project" "project" {
 # Ensure the KMS key exists for Artifact Registry
 resource "google_kms_key_ring" "repo_key_ring" {
   depends_on = [google_project_service.api_services]
-  
+
   name     = "artifact-registry-key-ring"
   location = var.region
 }
