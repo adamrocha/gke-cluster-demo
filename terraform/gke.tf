@@ -23,8 +23,8 @@ resource "google_container_cluster" "gke_cluster_demo" {
   remove_default_node_pool    = true
   networking_mode             = "VPC_NATIVE"
   resource_labels = {
-    env   = "dev"
-    owner = "dev-team"
+    env        = "dev"
+    owner      = "dev-team"
     managed_by = "terraform"
   }
 
@@ -128,8 +128,8 @@ resource "google_container_node_pool" "node_pool_demo" {
 
     tags = ["gke-node"]
     labels = {
-      env   = "dev"
-      owner = "dev-team"
+      env        = "dev"
+      owner      = "dev-team"
       managed_by = "terraform"
     }
   }

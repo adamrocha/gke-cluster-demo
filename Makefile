@@ -81,7 +81,7 @@ tf-bootstrap: tf-bucket tf-format tf-init tf-validate tf-plan
 	@echo "To apply changes, run 'make tf-apply'."
 
 tf-format:
-	terraform -chdir=$(TF_DIR) fmt -check -recursive
+	terraform -chdir=$(TF_DIR) fmt -recursive
 	@echo "✅ Terraform files formatted."
 
 tf-init:
