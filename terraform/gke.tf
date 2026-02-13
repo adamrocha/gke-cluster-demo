@@ -137,7 +137,7 @@ resource "google_container_node_pool" "gke_pool" {
     auto_repair  = true
     auto_upgrade = true
   }
-  
+
   upgrade_settings {
     max_surge       = 1
     max_unavailable = 0
