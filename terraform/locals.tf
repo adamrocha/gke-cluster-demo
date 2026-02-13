@@ -14,7 +14,6 @@ resource "terraform_data" "update_kubeconfig" {
       
       # Use gcloud to get credentials and update kubeconfig
       gcloud container clusters get-credentials ${google_container_cluster.gke_cluster.name} \
-        --zone=${var.zone} \
         --region=${var.region} \
         --project=${var.project_id} \
     EOT
