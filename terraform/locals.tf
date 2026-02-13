@@ -17,6 +17,93 @@ resource "null_resource" "update_kubeconfig" {
   }
 }
 
+# Get project data to access project number
+data "google_project" "project" {
+  project_id = var.project_id
+}
+
+# Ensure the KMS key exists for Artifact Registry
+resource "google_kms_key_ring" "repo_key_ring" {
+  name     = "artifact-registry-key-ring"
+  location = var.region
+}
+
+resource "google_kms_crypto_key" "repo_key" {
+  name            = "artifact-registry-key"
+  key_ring        = google_kms_key_ring.repo_key_ring.id
+  rotation_period = "100000s"
+  purpose         = "ENCRYPT_DECRYPT"
+
+  lifecycle {
+    prevent_destroy = false
+  }
+}
+
+# Grant Artifact Registry service account permission to use the KMS key
+resource "google_kms_crypto_key_iam_member" "artifact_registry_kms" {
+  crypto_key_id = google_kms_crypto_key.repo_key.id
+  role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
+  member        = "serviceAccount:service-${data.google_project.project.number}@gcp-sa-artifactregistry.iam.gserviceaccount.com"
+}
+
+# Ensure the Artifact Registry repository exists
+resource "google_artifact_registry_repository" "repo" {
+  depends_on = [
+    google_kms_crypto_key_iam_member.artifact_registry_kms
+  ]
+  description   = "Docker repository for GKE images"
+  location      = var.region
+  repository_id = var.repo_name
+  format        = "DOCKER"
+  kms_key_name  = google_kms_crypto_key.repo_key.id
+
+  lifecycle {
+    prevent_destroy = false
+  }
+}
+
+# Lookup the image safely - commented out as it causes issues when image doesn't exist yet
+# The docker build process below will create the image
+# data "google_artifact_registry_docker_image" "my_image" {
+#   location      = google_artifact_registry_repository.repo.location
+#   repository_id = google_artifact_registry_repository.repo.repository_id
+#   image_name    = "${var.image_name}:${var.image_tag}"
+# }
+
+# Multi-architecture build using docker buildx
+resource "terraform_data" "docker_buildx" {
+  depends_on = [google_artifact_registry_repository.repo]
+
+  triggers_replace = {
+    image_tag  = var.image_tag
+    platforms  = join(",", var.platforms)
+    dockerfile = filemd5("../app/Dockerfile")
+  }
+
+  provisioner "local-exec" {
+    command     = <<-EOT
+      set -e
+      echo "🔨 Building multi-architecture image..."
+      
+      # Login to GAR
+      gcloud auth configure-docker "${var.region}-docker.pkg.dev" --quiet
+      
+      # Create buildx builder if not exists
+      docker buildx create --use --name multiarch-builder 2>/dev/null || docker buildx use multiarch-builder
+      
+      # Build and push multi-arch image
+      docker buildx build \
+        --platform ${join(",", var.platforms)} \
+        --tag "${var.region}-docker.pkg.dev/${var.project_id}/${var.repo_name}/${var.image_name}:${var.image_tag}" \
+        --push \
+        ../app/
+      
+      echo "✅ Multi-arch image pushed successfully"
+    EOT
+    interpreter = ["bash", "-c"]
+  }
+}
+
 # resource "null_resource" "image_build" {
 #   triggers = {
 #     always_run = timestamp()
@@ -36,115 +123,58 @@ resource "null_resource" "update_kubeconfig" {
 #   my_ip = "${chomp(data.http.my_ip.response_body)}/32"
 # }
 
-// This file contains local variables used in the Terraform configuration.
-// These variables are used to simplify the configuration and avoid repetition.
-
-# Ensure the KMS key exists for Artifact Registry
-# resource "google_kms_key_ring" "repo_key_ring" {
-#   name     = "artifact-registry-key-ring"
-#   location = var.region
+# # Build image only if it doesn't exist
+# resource "null_resource" "image_build" {
+#   depends_on = [
+#     google_artifact_registry_repository.repo,
+#     data.external.image_exists
+#   ]
+#   triggers = {
+#     image_tag = var.image_tag
+#   }
+#   provisioner "local-exec" {
+#     environment = {
+#       PROJECT_ID = var.project_id
+#       REGION     = var.region
+#       REPO_NAME  = var.repo_name
+#       IMAGE_NAME = var.image_name
+#       IMAGE_TAG  = var.image_tag
+#       PLATFORMS  = join(",", var.platforms)
+#     }
+#     command     = <<EOT
+#       if [ "${data.external.image_exists.result.exists}" = "false" ]; then
+#         ../scripts/docker-image.sh
+#       else
+#         echo "Image already exists, skipping build."
+#       fi
+#     EOT
+#     interpreter = ["bash", "-c"]
+#   }
 # }
 
-# resource "google_kms_crypto_key" "repo_key" {
-#   name            = "artifact-registry-key"
-#   key_ring        = google_kms_key_ring.repo_key_ring.id
-#   rotation_period = "100000s"
+# # Get the image digest from Artifact Registry
+# data "external" "image_digest" {
+#   depends_on = [null_resource.image_build]
+#   program = [
+#     "bash", "-c", <<EOT
+#       set -euo pipefail
+
+#       PROJECT_ID="${var.project_id}"
+#       REGION="${var.region}"
+#       REPO_NAME="${var.repo_name}"
+#       IMAGE_NAME="${var.image_name}"
+#       IMAGE_TAG="${var.image_tag}"
+
+#       DIGEST=$(gcloud artifacts docker images list \
+#         "$REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/$IMAGE_NAME" \
+#         --include-tags \
+#         --filter="tags=$IMAGE_TAG" \
+#         --format="get(DIGEST)")
+
+#       echo "{\"digest\": \"$DIGEST\"}"
+#     EOT
+#   ]
 # }
-
-# Ensure the Artifact Registry repository exists
-resource "google_artifact_registry_repository" "repo" {
-  description   = "Docker repository for GKE images"
-  location      = var.region
-  repository_id = var.repo_name
-  format        = "DOCKER"
-
-  # kms_key_name = google_kms_crypto_key.repo_key.id
-
-  lifecycle {
-    prevent_destroy = false
-  }
-}
-
-# Check if the image exists in Artifact Registry
-data "external" "image_exists" {
-  depends_on = [google_artifact_registry_repository.repo]
-  program = [
-    "bash", "-c", <<EOT
-      set -euo pipefail
-
-      PROJECT_ID="${var.project_id}"
-      REGION="${var.region}"
-      REPO_NAME="${var.repo_name}"
-      IMAGE_NAME="${var.image_name}"
-      IMAGE_TAG="${var.image_tag}"
-      
-      DIGEST=$(gcloud artifacts docker images list \
-        "$REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/$IMAGE_NAME" \
-        --include-tags \
-        --filter="tags=$IMAGE_TAG" \
-        --format="get(DIGEST)")
-
-      if [[ -n "$DIGEST" ]]; then
-        echo '{"exists": "true"}'
-      else
-        echo '{"exists": "false"}'
-      fi
-    EOT
-  ]
-}
-
-# Build image only if it doesn't exist
-resource "null_resource" "image_build" {
-  depends_on = [
-    google_artifact_registry_repository.repo,
-    data.external.image_exists
-  ]
-  triggers = {
-    image_tag = var.image_tag
-  }
-  provisioner "local-exec" {
-    environment = {
-      PROJECT_ID = var.project_id
-      REGION     = var.region
-      REPO_NAME  = var.repo_name
-      IMAGE_NAME = var.image_name
-      IMAGE_TAG  = var.image_tag
-      PLATFORMS  = join(",", var.platforms)
-    }
-    command     = <<EOT
-      if [ "${data.external.image_exists.result.exists}" = "false" ]; then
-        ../scripts/docker-image.sh
-      else
-        echo "Image already exists, skipping build."
-      fi
-    EOT
-    interpreter = ["bash", "-c"]
-  }
-}
-
-# Get the image digest from Artifact Registry
-data "external" "image_digest" {
-  depends_on = [null_resource.image_build]
-  program = [
-    "bash", "-c", <<EOT
-      set -euo pipefail
-
-      PROJECT_ID="${var.project_id}"
-      REGION="${var.region}"
-      REPO_NAME="${var.repo_name}"
-      IMAGE_NAME="${var.image_name}"
-      IMAGE_TAG="${var.image_tag}"
-      
-      DIGEST=$(gcloud artifacts docker images list \
-        "$REGION-docker.pkg.dev/$PROJECT_ID/$REPO_NAME/$IMAGE_NAME" \
-        --include-tags \
-        --filter="tags=$IMAGE_TAG" \
-        --format="get(DIGEST)")
-
-      echo "{\"digest\": \"$DIGEST\"}"
-    EOT
-  ]
-}
 
 
 // IAM roles for the service account

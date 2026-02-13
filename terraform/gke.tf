@@ -6,9 +6,9 @@ resource "google_compute_project_metadata" "enable_oslogin" {
   }
 }
 
-data "external" "local_ip" {
-  program = ["bash", "../scripts/fetch-ip.sh"]
-}
+# data "external" "local_ip" {
+#   program = ["bash", "../scripts/fetch-ip.sh"]
+# }
 
 resource "google_container_cluster" "gke_cluster" {
   # checkov:skip=CKV_GCP_69: enabled at the node pool level
@@ -137,6 +137,7 @@ resource "google_container_node_pool" "gke_pool" {
     auto_repair  = true
     auto_upgrade = true
   }
+  
   upgrade_settings {
     max_surge       = 1
     max_unavailable = 0

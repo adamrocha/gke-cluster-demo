@@ -33,7 +33,7 @@ validate_env_var "IMAGE_TAG"
 validate_env_var "PLATFORMS"
 PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
 
-cd "${PROJECT_ROOT}/kube/" || exit 1
+cd "${PROJECT_ROOT}/app/" || exit 1
 
 # ------------------------------------------------------------
 # Ensure repo exists

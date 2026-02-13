@@ -18,10 +18,10 @@
 #   value       = google_container_cluster.gke_cluster.endpoint
 # }
 
-output "load_balancer_ip" {
-  description = "External IP of the hello-world service"
-  value       = kubernetes_service.hello_world_service.status[0].load_balancer[0].ingress[0].ip
-}
+# output "load_balancer_ip" {
+#   description = "External IP of the hello-world service"
+#   value       = kubernetes_service.hello_world_service.status[0].load_balancer[0].ingress[0].ip
+# }
 
 # output "local_ip" {
 #   description = "Local IP address of the machine running Terraform"

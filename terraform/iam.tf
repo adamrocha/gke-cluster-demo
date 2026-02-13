@@ -4,7 +4,8 @@ resource "google_project_service" "api_services" {
     "container.googleapis.com",
     "cloudresourcemanager.googleapis.com",
     "artifactregistry.googleapis.com",
-    "storage-api.googleapis.com"
+    "storage-api.googleapis.com",
+    "cloudkms.googleapis.com"
   ])
   project                    = var.project_id
   service                    = each.key

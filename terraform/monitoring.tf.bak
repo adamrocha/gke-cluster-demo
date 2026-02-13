@@ -1,0 +1,52 @@
+resource "helm_release" "prometheus" {
+  depends_on       = [google_container_node_pool.gke_pool]
+  name             = "prometheus"
+  repository       = "https://prometheus-community.github.io/helm-charts"
+  chart            = "kube-prometheus-stack"
+  namespace        = var.monitoring_ns
+  create_namespace = true
+  timeout          = 600
+  skip_crds        = false
+  wait             = true
+  version          = "76.4.0"
+
+  set = [
+    {
+      name  = "alertmanager.enabled"
+      value = "true"
+    },
+    {
+      name  = "grafana.enabled"
+      value = "true"
+    },
+    {
+      name  = "grafana.service.type"
+      value = "ClusterIP"
+    },
+    {
+      name  = "grafana.service.port"
+      value = "80"
+    },
+    {
+      name  = "alertmanager.service.type"
+      value = "ClusterIP"
+    },
+    {
+      name  = "prometheus.service.type"
+      value = "ClusterIP"
+    },
+    {
+      name  = "coreDns.enabled"
+      value = "true"
+    },
+    {
+      name  = "coreDns.serviceMonitor.enabled"
+      value = "true"
+    },
+    {
+      name  = "prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues"
+      value = "false"
+    }
+  ]
+}
+

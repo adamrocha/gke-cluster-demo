@@ -1,0 +1,42 @@
+[tool.poetry]
+name = "gke-cluster-demo"
+version = "1.0.0"
+description = "GKE cluster demonstration with Terraform and Kubernetes manifests"
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+packages = [{include = "scripts"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+google-cloud-storage = "^2.10.0"
+google-cloud-container = "^2.20.0"
+kubernetes = "^28.1.0"
+pyyaml = "^6.0.1"
+requests = "^2.31.0"
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.12.1"
+flake8 = "^7.0.0"
+mypy = "^1.8.0"
+pytest = "^7.4.3"
+pytest-cov = "^4.1.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 100
+target-version = ['py39']
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
