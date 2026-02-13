@@ -13,7 +13,7 @@ resource "google_kms_key_ring" "repo_key_ring" {
 resource "google_kms_crypto_key" "repo_key" {
   name            = "artifact-registry-key"
   key_ring        = google_kms_key_ring.repo_key_ring.id
-  rotation_period = "60s"
+  rotation_period = "18000s"
   purpose         = "ENCRYPT_DECRYPT"
 
   version_template {
