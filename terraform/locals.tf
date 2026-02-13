@@ -24,26 +24,18 @@ resource "terraform_data" "update_kubeconfig" {
 # Ensure the Artifact Registry repository exists
 resource "google_artifact_registry_repository" "repo" {
   depends_on = [
-    google_kms_crypto_key_iam_member.artifact_registry_kms
+    # google_kms_crypto_key_iam_member.artifact_registry_kms
   ]
   description   = "Docker repository for GKE images"
   location      = var.region
   repository_id = var.repo_name
   format        = "DOCKER"
-  kms_key_name  = google_kms_crypto_key.repo_key.id
+  # kms_key_name  = google_kms_crypto_key.repo_key.id
 
   lifecycle {
     prevent_destroy = false
   }
 }
-
-# Lookup the image safely - commented out as it causes issues when image doesn't exist yet
-# The docker build process below will create the image
-# data "google_artifact_registry_docker_image" "my_image" {
-#   location      = google_artifact_registry_repository.repo.location
-#   repository_id = google_artifact_registry_repository.repo.repository_id
-#   image_name    = "${var.image_name}:${var.image_tag}"
-# }
 
 # Multi-architecture build using docker buildx
 resource "terraform_data" "docker_buildx" {

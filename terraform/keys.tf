@@ -10,17 +10,17 @@ resource "google_kms_key_ring" "repo_key_ring" {
   }
 }
 
-resource "google_kms_crypto_key" "repo_key" {
-  name            = "artifact-registry-key"
-  key_ring        = google_kms_key_ring.repo_key_ring.id
-  rotation_period = "86400s"
-  purpose         = "ENCRYPT_DECRYPT"
+# resource "google_kms_crypto_key" "repo_key" {
+#   name            = "artifact-registry-key"
+#   key_ring        = google_kms_key_ring.repo_key_ring.id
+#   rotation_period = "86400s"
+#   purpose         = "ENCRYPT_DECRYPT"
 
-  version_template {
-    algorithm = "GOOGLE_SYMMETRIC_ENCRYPTION"
-  }
+#   version_template {
+#     algorithm = "GOOGLE_SYMMETRIC_ENCRYPTION"
+#   }
 
-  lifecycle {
-    prevent_destroy = false
-  }
-}
+#   lifecycle {
+#     prevent_destroy = false
+#   }
+# }
