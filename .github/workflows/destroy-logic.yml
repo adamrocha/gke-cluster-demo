@@ -10,7 +10,7 @@ on:
         description: "Comma-separated branch prefixes that qualify for destroy"
         required: false
         type: string
-        default: "feature/,fix/,chore/"
+        default: "delete/,nuke/"
     outputs:
       should_destroy:
         description: "True if branch deletion should trigger Terraform destroy"
@@ -27,12 +27,18 @@ jobs:
           prefixes="${{ inputs.branch_prefixes }}"
           destroy=false
 
-          # Check for branch deletion and not main, stage, or dev
+          # Check for branch deletion
           if [ "${{ github.event_name }}" = "delete" ] && [ "${{ github.event.ref_type }}" = "branch" ]; then
             branch="${{ github.event.ref }}"
-            if [[ "$branch" != "main" && "$branch" != "stage" && "$branch" != "dev" ]]; then
-              destroy=true
-            fi
+            
+            # Check if branch starts with any of the specified prefixes
+            IFS=',' read -ra PREFIX_ARRAY <<< "$prefixes"
+            for prefix in "${PREFIX_ARRAY[@]}"; do
+              if [[ "$branch" == "$prefix"* ]]; then
+                destroy=true
+                break
+              fi
+            done
           fi
 
           echo "destroy=$destroy" >> $GITHUB_OUTPUT

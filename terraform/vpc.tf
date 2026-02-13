@@ -25,11 +25,11 @@ resource "google_compute_subnetwork" "gke_subnet" {
     ip_cidr_range = "10.20.0.0/16"
   }
 
-  log_config {
-    aggregation_interval = "INTERVAL_5_SEC"       # Options: INTERVAL_5_SEC, INTERVAL_30_SEC, INTERVAL_1_MIN
-    flow_sampling        = 0.5                    # Sampling rate between 0.0 and 1.0
-    metadata             = "INCLUDE_ALL_METADATA" # Options: INCLUDE_ALL_METADATA, EXCLUDE_ALL_METADATA, CUSTOM_METADATA
-  }
+  # log_config {
+  #   aggregation_interval = "INTERVAL_5_SEC"       # Options: INTERVAL_5_SEC, INTERVAL_30_SEC, INTERVAL_1_MIN
+  #   flow_sampling        = 0.5                    # Sampling rate between 0.0 and 1.0
+  #   metadata             = "INCLUDE_ALL_METADATA" # Options: INCLUDE_ALL_METADATA, EXCLUDE_ALL_METADATA, CUSTOM_METADATA
+  # }
 }
 
 resource "google_compute_global_address" "gke_lb_ip" {
