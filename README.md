@@ -241,6 +241,10 @@ See [docs/blue-green-deployment.md](docs/blue-green-deployment.md) for detailed 
 
 ```text
 gke-cluster-demo/
+├── .github/                                    # GitHub configurations
+│   └── workflows/                              # GitHub Actions workflows
+│       ├── gke-deploy.yml                      # Main deployment pipeline
+│       └── destroy-logic.yml                   # Reusable destroy condition workflow
 ├── ansible/                                    # Ansible configuration (optional)
 │   ├── ansible.cfg                             # Ansible settings
 │   ├── inventory.gcp.yaml                      # GCP inventory
@@ -299,8 +303,114 @@ gke-cluster-demo/
 └── README.md                                   # This file
 ```
 
+## CI/CD with GitHub Actions
+
+The project includes automated deployment workflows that mirror the pattern used in the [AWS EKS cluster demo](https://github.com/adamrocha/eks-cluster-demo) for consistency across cloud providers.
+
+### Workflow Overview
+
+The deployment pipeline consists of two main jobs:
+
+1. **terraform-apply** - Provisions GKE infrastructure and builds Docker image
+2. **deploy** - Applies Kubernetes manifests and updates deployment
+
+### Automated Deployment Flow
+
+```mermaid
+graph LR
+    A[Push to branch] --> B[terraform-apply]
+    B --> C[Build Docker Image]
+    C --> D[Push to Artifact Registry]
+    D --> E[deploy Job]
+    E --> F[Apply Manifests]
+    F --> G[Update Deployment]
+    G --> H[Rollout Complete]
+```
+
+### Branch Strategy
+
+- **`main`** - Production environment
+- **`stage`** - Staging environment
+- **`dev`** - Development environment
+
+### Infrastructure Cleanup
+
+Delete branches prefixed with `delete/` or `nuke/` to trigger automatic infrastructure destruction:
+
+```bash
+# Create temporary environment
+git checkout -b delete/testing
+git push origin delete/testing
+
+# When done, delete the branch to trigger cleanup
+git push origin --delete delete/testing
+```
+
+This will:
+1. Delete Kubernetes resources
+2. Destroy Terraform infrastructure
+3. Require manual approval via `destroy-approval` environment
+
+### Required GitHub Secrets
+
+Configure in **Settings → Secrets and variables → Actions**:
+
+| Secret | Description |
+|--------|-------------|
+| `GCP_SA_KEY` | JSON key for GCP service account |
+
+### Required GitHub Variables
+
+Configure in **Settings → Secrets and variables → Actions → Variables**:
+
+| Variable | Example | Description |
+|----------|---------|-------------|
+| `GCP_PROJECT_ID` | `gke-cluster-458701` | Your GCP project ID |
+| `GCP_REGION` | `us-central1` | GCP region for resources |
+| `GKE_CLUSTER_NAME` | `gke-cluster-demo` | Name of your GKE cluster |
+
+### Deployment Pattern
+
+The workflow uses the same deployment pattern as the EKS demo:
+
+```yaml
+# Apply manifests
+kubectl apply -f manifests/hello-world-ns.yaml
+kubectl apply -f manifests/hello-world-deployment.yaml
+kubectl apply -f manifests/hello-world-service.yaml
+
+# Update deployment image  
+kubectl set image deployment/hello-world \
+  -n hello-world-ns \
+  hello-world=us-central1-docker.pkg.dev/PROJECT/REPO/IMAGE:TAG
+
+# Wait for rollout with automatic rollback on failure
+kubectl rollout status deployment/hello-world -n hello-world-ns
+```
+
+### Concurrency Control
+
+The workflow prevents simultaneous deployments to the same branch:
+
+```yaml
+concurrency:
+  group: terraform-${{ github.ref_name }}
+  cancel-in-progress: true
+```
+
+### For Complete Details
+
+See **[docs/github-actions-workflow-guide.md](docs/github-actions-workflow-guide.md)** for:
+- Detailed job descriptions
+- Deployment flow diagrams
+- Destroy workflow logic
+- Error handling and rollback
+- Comparison with EKS workflow
+- Troubleshooting guide
+
 ## Documentation
 
+- **[docs/github-actions-workflow-guide.md](docs/github-actions-workflow-guide.md)** - CI/CD pipeline and GitHub Actions workflow guide
 - **[docs/kubernetes-deployment-guide.md](docs/kubernetes-deployment-guide.md)** - Detailed Kubernetes deployment documentation
 - **[docs/blue-green-deployment.md](docs/blue-green-deployment.md)** - Blue/Green deployment pattern guide
 - **[docs/blue-green-quick-reference.md](docs/blue-green-quick-reference.md)** - Quick reference for blue/green deployments
