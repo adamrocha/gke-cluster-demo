@@ -138,6 +138,11 @@ jobs:
       - name: Terraform Init
         run: terraform -chdir=terraform init
 
+      - name: Install gke-gcloud-auth-plugin
+        run: |
+          gcloud components install gke-gcloud-auth-plugin --quiet
+          echo "export USE_GKE_GCLOUD_AUTH_PLUGIN=True" >> $GITHUB_ENV
+
       - name: Update kubeconfig
         run: gcloud container clusters get-credentials ${{ env.GKE_CLUSTER_NAME }} --region ${{ env.GCP_REGION }} --project ${{ env.GCP_PROJECT_ID }} || true
 
@@ -166,6 +171,14 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Install gke-gcloud-auth-plugin
+        run: |
+          gcloud components install gke-gcloud-auth-plugin --quiet
+          echo "export USE_GKE_GCLOUD_AUTH_PLUGIN=True" >> $GITHUB_ENV
 
       - name: Update kubeconfig
         run: gcloud container clusters get-credentials ${{ env.GKE_CLUSTER_NAME }} --region ${{ env.GCP_REGION }} --project ${{ env.GCP_PROJECT_ID }}
