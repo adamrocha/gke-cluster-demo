@@ -7,33 +7,34 @@ set -euo pipefail
 # ------------------------------------------------------------
 # Config
 # ------------------------------------------------------------
-# PROJECT_ID="gke-cluster-458701"
-# REGION="us-central1"
-# REPO_NAME="hello-world-repo"
-# IMAGE_NAME="hello-world"
-# IMAGE_TAG="1.2.2"
-# PLATFORMS="linux/amd64,linux/arm64"
+PROJECT_ID="gke-cluster-458701"
+REGION="us-central1"
+REPO_NAME="hello-world-repo"
+IMAGE_NAME="hello-world"
+IMAGE_TAG="1.2.2"
+PLATFORMS="linux/amd64,linux/arm64"
 
 # Function to validate environment variables
-validate_env_var() {
-  local var_name="$1"
-  local var_value="${!var_name}"
-  if [[ -z "${var_value}" ]]; then
-    echo "Warning: ${var_name} is not set."
-  else
-    echo "${var_name} is ${var_value}"
-  fi
-}
+# validate_env_var() {
+#   local var_name="$1"
+#   local var_value="${!var_name}"
+#   if [[ -z "${var_value}" ]]; then
+#     echo "Warning: ${var_name} is not set."
+#   else
+#     echo "${var_name} is ${var_value}"
+#   fi
+# }
 
-validate_env_var "PROJECT_ID"
-validate_env_var "REGION"
-validate_env_var "REPO_NAME"
-validate_env_var "IMAGE_NAME"
-validate_env_var "IMAGE_TAG"
-validate_env_var "PLATFORMS"
+# validate_env_var "PROJECT_ID"
+# validate_env_var "REGION"
+# validate_env_var "REPO_NAME"
+# validate_env_var "IMAGE_NAME"
+# validate_env_var "IMAGE_TAG"
+# validate_env_var "PLATFORMS"
+
 PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
 
-cd "${PROJECT_ROOT}/kube/" || exit 1
+cd "${PROJECT_ROOT}/app/" || exit 1
 
 # ------------------------------------------------------------
 # Ensure repo exists
@@ -91,10 +92,10 @@ if ! docker buildx version &> /dev/null; then
 fi
 
 # Ensure buildx builder exists
-if ! docker buildx inspect mybuilder >/dev/null 2>&1; then
-  docker buildx create --name mybuilder --driver docker-container --use
+if ! docker buildx inspect multiarch-builder >/dev/null 2>&1; then
+  docker buildx create --use --name multiarch-builder 2>/dev/null || docker buildx use multiarch-builder
 else
-  docker buildx use mybuilder
+  docker buildx use multiarch-builder
 fi
 
 # ------------------------------------------------------------

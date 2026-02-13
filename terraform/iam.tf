@@ -4,7 +4,8 @@ resource "google_project_service" "api_services" {
     "container.googleapis.com",
     "cloudresourcemanager.googleapis.com",
     "artifactregistry.googleapis.com",
-    "storage-api.googleapis.com"
+    "storage-api.googleapis.com",
+    "cloudkms.googleapis.com"
   ])
   project                    = var.project_id
   service                    = each.key
@@ -34,21 +35,9 @@ resource "google_project_iam_member" "gke_sa_roles" {
   member  = "serviceAccount:${google_service_account.gke_service_account.email}"
 }
 
-/*
-resource "google_storage_bucket_iam_member" "bucket_admin" {
-  depends_on = [google_project_service.api_services]
-  role       = each.key
-  for_each = toset([
-    //"roles/storage.admin",
-    //"roles/storage.objectAdmin",
-    //"roles/storage.objectCreator",
-    //"roles/storage.objectViewer"
-  ])
-  bucket = var.terraform_state_bucket
-  member = "serviceAccount:${google_service_account.gcs_service_account.email}"
-
-  lifecycle {
-    prevent_destroy = false
-  }
-}
-*/
+# Grant Artifact Registry service account permission to use the KMS key
+# resource "google_kms_crypto_key_iam_member" "artifact_registry_kms" {
+#   crypto_key_id = google_kms_crypto_key.repo_key.id
+#   role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
+#   member        = "serviceAccount:service-${var.project_id}@gcp-sa-artifactregistry.iam.gserviceaccount.com"
+# }
