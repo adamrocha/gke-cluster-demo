@@ -100,7 +100,7 @@ tf-apply:
 	terraform -chdir=$(TF_DIR) apply
 	@echo "✅ Terraform resources deployed."
 
-tf-destroy:
+tf-destroy: k8s-delete
 	terraform -chdir=$(TF_DIR) destroy
 	@echo "✅ Terraform resources destroyed."
 
