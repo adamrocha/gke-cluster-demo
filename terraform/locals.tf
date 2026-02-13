@@ -1,51 +1,25 @@
-resource "null_resource" "update_kubeconfig" {
+resource "terraform_data" "update_kubeconfig" {
   depends_on = [google_container_cluster.gke_cluster]
 
-  triggers = {
+  triggers_replace = {
     cluster_name = google_container_cluster.gke_cluster.name
     endpoint     = google_container_cluster.gke_cluster.endpoint
     master_auth  = sha1(jsonencode(google_container_cluster.gke_cluster.master_auth))
   }
 
   provisioner "local-exec" {
-    command     = <<EOF
-    gcloud container clusters get-credentials ${google_container_cluster.gke_cluster.name} \
-    --region=${var.region} \
-    --project=${var.project_id}
-    EOF
+    command     = <<-EOT
+      set -e
+      echo "🔑 Updating kubeconfig for cluster ${google_container_cluster.gke_cluster.name}..."
+      
+      # Use gcloud to get credentials and update kubeconfig
+      gcloud container clusters get-credentials ${google_container_cluster.gke_cluster.name} \
+        --zone=${var.zone} \
+        --region=${var.region} \
+        --project=${var.project_id} \
+    EOT
     interpreter = ["bash", "-c"]
   }
-}
-
-# Get project data to access project number
-data "google_project" "project" {
-  project_id = var.project_id
-}
-
-# Ensure the KMS key exists for Artifact Registry
-resource "google_kms_key_ring" "repo_key_ring" {
-  depends_on = [google_project_service.api_services]
-
-  name     = "artifact-registry-key-ring"
-  location = var.region
-}
-
-resource "google_kms_crypto_key" "repo_key" {
-  name            = "artifact-registry-key"
-  key_ring        = google_kms_key_ring.repo_key_ring.id
-  rotation_period = "100000s"
-  purpose         = "ENCRYPT_DECRYPT"
-
-  lifecycle {
-    prevent_destroy = false
-  }
-}
-
-# Grant Artifact Registry service account permission to use the KMS key
-resource "google_kms_crypto_key_iam_member" "artifact_registry_kms" {
-  crypto_key_id = google_kms_crypto_key.repo_key.id
-  role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
-  member        = "serviceAccount:service-${data.google_project.project.number}@gcp-sa-artifactregistry.iam.gserviceaccount.com"
 }
 
 # Ensure the Artifact Registry repository exists
