@@ -120,17 +120,17 @@ gcloud compute backend-services describe <backend-service-name> --global
 
 ### Cloud Armor Rules
 
-| Priority | Rule | Action | Description |
-| --- | --- | --- | --- |
-| 1000 | Block malicious IPs | deny(403) | Blocks known bad actors |
-| 2000 | Rate limiting | rate_based_ban | 100 req/min per IP, 10min ban |
-| 3000 | SQL injection | deny(403) | OWASP Top 10 protection |
-| 4000 | XSS | deny(403) | Cross-site scripting defense |
-| 5000 | LFI | deny(403) | Local file inclusion protection |
-| 6000 | RCE | deny(403) | Remote code execution prevention |
-| 7000 | Scanner detection | deny(403) | Block security scanners |
-| 8000 | Protocol attacks | deny(403) | HTTP protocol attack mitigation |
-| 9000 | Session fixation | deny(403) | Session security |
+| Priority | Rule                | Action         | Description                      |
+| -------- | ------------------- | -------------- | -------------------------------- |
+| 1000     | Block malicious IPs | deny(403)      | Blocks known bad actors          |
+| 2000     | Rate limiting       | rate_based_ban | 100 req/min per IP, 10min ban    |
+| 3000     | SQL injection       | deny(403)      | OWASP Top 10 protection          |
+| 4000     | XSS                 | deny(403)      | Cross-site scripting defense     |
+| 5000     | LFI                 | deny(403)      | Local file inclusion protection  |
+| 6000     | RCE                 | deny(403)      | Remote code execution prevention |
+| 7000     | Scanner detection   | deny(403)      | Block security scanners          |
+| 8000     | Protocol attacks    | deny(403)      | HTTP protocol attack mitigation  |
+| 9000     | Session fixation    | deny(403)      | Session security                 |
 
 ### Adaptive Protection
 

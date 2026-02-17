@@ -155,6 +155,6 @@ resource "google_container_node_pool" "node_pool_demo" {
 
   lifecycle {
     create_before_destroy = true
-    prevent_destroy = false
+    prevent_destroy       = false
   }
 }

@@ -1,17 +1,32 @@
+## -----------------------------------------------------------------------------
+## Global configuration
+## -----------------------------------------------------------------------------
 export GCP_PAGER :=
 SHELL := /bin/bash
-GCP_PROJECT=gke-cluster-458701
-LOCATION=us-central1
-BUCKET_NAME=terraform-state-bucket-2727
-REPO_NAME=hello-world-repo
-REPO_LOCATION=us
-IMAGE_NAME=hello-world
-IMAGE_TAG=1.2.5
-TF_DIR=terraform
-NAMESPACE=hello-world-ns
-CLUSTER_NAME=gke-cluster-demo
 
-.PHONY: check-gcp help
+GCP_PROJECT := gke-cluster-458701
+LOCATION := us-central1
+CLUSTER_NAME := gke-cluster-demo
+NAMESPACE := hello-world-ns
+INGRESS_NAME := hello-world-ingress
+
+BUCKET_NAME := terraform-state-bucket-2727
+TF_DIR := terraform
+
+REPO_NAME := hello-world-repo
+REPO_LOCATION := us
+IMAGE_NAME := hello-world
+IMAGE_TAG := 1.2.5
+
+.PHONY: \
+	help check-gcp install-tools \
+	tf-bootstrap tf-format tf-init tf-validate tf-plan tf-apply tf-destroy tf-output tf-state \
+	tf-bucket create-bucket enable-versioning set-lifecycle add-labels delete-artifact-repo nuke-tf-bucket \
+	k8s-validate k8s-validate-server k8s-apply-ns k8s-apply k8s-delete k8s-status k8s-logs \
+	k8s-ingress-ip k8s-curl k8s-curl-https k8s-smoke k8s-smoke-https k8s-shell k8s-describe k8s-restart \
+	k8s-kustomize-validate k8s-kustomize-apply k8s-kustomize-diff k8s-kustomize-delete \
+	bg-deploy bg-status bg-switch-blue bg-switch-green bg-rollback bg-cleanup bg-test-blue bg-test-green bg-logs-blue bg-logs-green \
+	update-kubeconfig image-verify-arch k8s-cdn-status
 
 .DEFAULT_GOAL := help
 
@@ -86,7 +101,7 @@ install-tools:
 	@/bin/bash ./scripts/install-tools.sh
 
 tf-bootstrap: tf-bucket tf-format tf-init tf-validate tf-plan
-	@echo "🔄 Runnin terraform bootstrap..."
+	@echo "🔄 Running terraform bootstrap..."
 	@echo "✅ Terraform bootstrap completed successfully."
 	@echo "To apply changes, run 'make tf-apply'."
 
@@ -106,7 +121,7 @@ tf-plan:
 	terraform -chdir=$(TF_DIR) plan
 	@echo "✅ Terraform plan completed."
 
-tf-apply:
+tf-apply: tf-format tf-validate
 	terraform -chdir=$(TF_DIR) apply
 	@echo "✅ Terraform resources deployed."
 
@@ -174,6 +189,7 @@ nuke-tf-bucket:
 	else \
 		echo "❎ Aborted."; \
 	fi
+
 # Kubernetes Manifest Deployment Targets
 k8s-validate:
 	@echo "🔍 Validating Kubernetes manifests..."
@@ -244,10 +260,10 @@ k8s-logs:
 
 k8s-ingress-ip:
 	@echo "🌐 Ingress external IP:"
-	@kubectl get ingress hello-world-ingress -n $(NAMESPACE) -o jsonpath='{.status.loadBalancer.ingress[0].ip}' && echo ""
+	@kubectl get ingress $(INGRESS_NAME) -n $(NAMESPACE) -o jsonpath='{.status.loadBalancer.ingress[0].ip}' && echo ""
 
 k8s-curl:
-	@IP=$$(kubectl get ingress hello-world-ingress -n $(NAMESPACE) -o jsonpath='{.status.loadBalancer.ingress[0].ip}'); \
+	@IP=$$(kubectl get ingress $(INGRESS_NAME) -n $(NAMESPACE) -o jsonpath='{.status.loadBalancer.ingress[0].ip}'); \
 	if [ -z "$$IP" ]; then \
 		echo "❌ Ingress IP not ready yet"; \
 		exit 1; \
@@ -266,7 +282,7 @@ k8s-curl:
 	exit 1
 
 k8s-curl-https:
-	@IP=$$(kubectl get ingress hello-world-ingress -n $(NAMESPACE) -o jsonpath='{.status.loadBalancer.ingress[0].ip}'); \
+	@IP=$$(kubectl get ingress $(INGRESS_NAME) -n $(NAMESPACE) -o jsonpath='{.status.loadBalancer.ingress[0].ip}'); \
 	if [ -z "$$IP" ]; then \
 		echo "❌ Ingress IP not ready yet"; \
 		exit 1; \
@@ -288,7 +304,7 @@ k8s-smoke:
 	fi; \
 	echo "$$PODS" | awk '{print $$2}' | grep -vqE '^([0-9]+/[0-9]+)$$' && { echo "❌ Unexpected pod readiness output"; exit 1; } || true; \
 	echo "$$PODS" | awk '{split($$2,a,"/"); if (a[1] != a[2]) exit 1} END {if (NR==0) exit 1}' || { echo "❌ Not all pods are ready"; exit 1; }
-	@IP=$$(kubectl get ingress hello-world-ingress -n $(NAMESPACE) --request-timeout=20s -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/tmp/k8s-smoke.err); \
+	@IP=$$(kubectl get ingress $(INGRESS_NAME) -n $(NAMESPACE) --request-timeout=20s -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/tmp/k8s-smoke.err); \
 	if [ $$? -ne 0 ]; then \
 		echo "❌ Unable to query ingress (API connectivity issue)"; \
 		cat /tmp/k8s-smoke.err; \
@@ -326,7 +342,7 @@ k8s-smoke-https:
 	fi; \
 	echo "$$PODS" | awk '{print $$2}' | grep -vqE '^([0-9]+/[0-9]+)$$' && { echo "❌ Unexpected pod readiness output"; exit 1; } || true; \
 	echo "$$PODS" | awk '{split($$2,a,"/"); if (a[1] != a[2]) exit 1} END {if (NR==0) exit 1}' || { echo "❌ Not all pods are ready"; exit 1; }
-	@IP=$$(kubectl get ingress hello-world-ingress -n $(NAMESPACE) --request-timeout=20s -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/tmp/k8s-smoke.err); \
+	@IP=$$(kubectl get ingress $(INGRESS_NAME) -n $(NAMESPACE) --request-timeout=20s -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/tmp/k8s-smoke.err); \
 	if [ $$? -ne 0 ]; then \
 		echo "❌ Unable to query ingress (API connectivity issue)"; \
 		cat /tmp/k8s-smoke.err; \
@@ -459,7 +475,7 @@ image-verify-arch:
 
 k8s-cdn-status:
 	@echo "📡 Checking Cloud CDN status on ingress backend..."
-	@BACKEND=$$(kubectl -n $(NAMESPACE) describe ingress hello-world-ingress 2>/tmp/k8s-cdn-status.err | sed -n 's/.*"\(k8s[0-9]-[^"]*hello-world-service-80[^"]*\)":"[A-Z]*".*/\1/p' | head -n1); \
+	@BACKEND=$$(kubectl -n $(NAMESPACE) describe ingress $(INGRESS_NAME) 2>/tmp/k8s-cdn-status.err | sed -n 's/.*"\(k8s[0-9]-[^"]*hello-world-service-80[^"]*\)":"[A-Z]*".*/\1/p' | head -n1); \
 	if [ -z "$$BACKEND" ]; then \
 		BACKEND=$$(gcloud compute backend-services list --global --project $(GCP_PROJECT) --filter='name~hello-world-ns-hello-world-service-80' --format='value(name)' | head -n1); \
 	fi; \
