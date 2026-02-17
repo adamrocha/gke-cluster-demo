@@ -39,18 +39,18 @@ cd "${PROJECT_ROOT}/app/" || exit 1
 # ------------------------------------------------------------
 # Ensure repo exists
 # ------------------------------------------------------------
-if ! gcloud artifacts repositories describe "$REPO_NAME" \
-    --location="$REGION" \
-    --project="$PROJECT_ID" >/dev/null 2>&1; then
-  echo "📦 Creating Artifact Registry repo: $REPO_NAME..."
-  gcloud artifacts repositories create "$REPO_NAME" \
-    --location="$REGION" \
-    --project="$PROJECT_ID" \
-    --repository-format=docker \
-    --description="Docker repository for $IMAGE_NAME"
-  echo "✅ Artifact Registry repo $REPO_NAME created."
+if ! gcloud artifacts repositories describe "${REPO_NAME}" \
+	--location="${REGION}" \
+	--project="${PROJECT_ID}" >/dev/null 2>&1; then
+	echo "📦 Creating Artifact Registry repo: ${REPO_NAME}..."
+	gcloud artifacts repositories create "${REPO_NAME}" \
+		--location="${REGION}" \
+		--project="${PROJECT_ID}" \
+		--repository-format=docker \
+		--description="Docker repository for ${IMAGE_NAME}"
+	echo "✅ Artifact Registry repo ${REPO_NAME} created."
 else
-  echo "✅ Artifact Registry repo $REPO_NAME already exists."
+	echo "✅ Artifact Registry repo ${REPO_NAME} already exists."
 fi
 
 # ------------------------------------------------------------
@@ -61,12 +61,12 @@ IMAGE_PATH="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:${
 # ------------------------------------------------------------
 # Check if image tag exists in Artifact Registry using gcloud
 # ------------------------------------------------------------
-echo "🔎 Checking Artifact Registry for $IMAGE_PATH (gcloud)..."
-if gcloud artifacts docker images describe "$IMAGE_PATH" >/dev/null 2>&1; then
-  echo "✅ Image $IMAGE_PATH already exists in Artifact Registry."
-  exit 0
+echo "🔎 Checking Artifact Registry for ${IMAGE_PATH} (gcloud)..."
+if gcloud artifacts docker images describe "${IMAGE_PATH}" >/dev/null 2>&1; then
+	echo "✅ Image ${IMAGE_PATH} already exists in Artifact Registry."
+	exit 0
 else
-  echo "ℹ️  Image not found in Artifact Registry via gcloud. Will build and push using Docker..."
+	echo "ℹ️  Image not found in Artifact Registry via gcloud. Will build and push using Docker..."
 fi
 
 # ------------------------------------------------------------
@@ -74,7 +74,7 @@ fi
 # ------------------------------------------------------------
 echo "🔑 Configuring docker credential helper for GAR..."
 if ! command -v docker-credential-gcr >/dev/null 2>&1; then
-  gcloud components install docker-credential-gcr --quiet
+	gcloud components install docker-credential-gcr --quiet
 fi
 
 gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
@@ -82,32 +82,32 @@ gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
 # ------------------------------------------------------------
 # Verify Docker + Buildx
 # ------------------------------------------------------------
-if ! command -v docker &> /dev/null; then
-  echo "❌ Docker not installed."
-  exit 1
+if ! command -v docker &>/dev/null; then
+	echo "❌ Docker not installed."
+	exit 1
 fi
-if ! docker buildx version &> /dev/null; then
-  echo "❌ Docker Buildx not installed."
-  exit 1
+if ! docker buildx version &>/dev/null; then
+	echo "❌ Docker Buildx not installed."
+	exit 1
 fi
 
 # Ensure buildx builder exists
 if ! docker buildx inspect multiarch-builder >/dev/null 2>&1; then
-  docker buildx create --use --name multiarch-builder 2>/dev/null || docker buildx use multiarch-builder
+	docker buildx create --use --name multiarch-builder 2>/dev/null || docker buildx use multiarch-builder
 else
-  docker buildx use multiarch-builder
+	docker buildx use multiarch-builder
 fi
 
 # ------------------------------------------------------------
 # Build + Push
 # ------------------------------------------------------------
 if ! docker buildx build \
-  --platform "$PLATFORMS" \
-  -t "$IMAGE_PATH" \
-  --push .; then
-  echo "❌ Docker build failed."
-  exit 1
+	--platform "${PLATFORMS}" \
+	-t "${IMAGE_PATH}" \
+	--push .; then
+	echo "❌ Docker build failed."
+	exit 1
 else
-  echo "✅ Successfully built and pushed $IMAGE_PATH to Artifact Registry."
-  exit 0
+	echo "✅ Successfully built and pushed ${IMAGE_PATH} to Artifact Registry."
+	exit 0
 fi

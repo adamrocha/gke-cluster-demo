@@ -5,8 +5,11 @@ LOCATION=us-central1
 BUCKET_NAME=terraform-state-bucket-2727
 REPO_NAME=hello-world-repo
 REPO_LOCATION=us
+IMAGE_NAME=hello-world
+IMAGE_TAG=1.2.5
 TF_DIR=terraform
 NAMESPACE=hello-world-ns
+CLUSTER_NAME=gke-cluster-demo
 
 .PHONY: check-gcp help
 
@@ -32,6 +35,11 @@ help:
 	@echo "  make k8s-apply           - Deploy all manifests"
 	@echo "  make k8s-status          - Check deployment status"
 	@echo "  make k8s-logs            - View application logs"
+	@echo "  make k8s-ingress-ip      - Print ingress external IP"
+	@echo "  make k8s-curl            - Curl ingress endpoint"
+	@echo "  make k8s-curl-https      - Curl ingress endpoint over HTTPS"
+	@echo "  make k8s-smoke           - Run pods/ingress/http smoke test"
+	@echo "  make k8s-smoke-https     - Run pods/ingress/https smoke test"
 	@echo "  make k8s-shell           - Open shell in running container"
 	@echo "  make k8s-describe        - Describe deployment"
 	@echo "  make k8s-restart         - Restart deployment"
@@ -59,6 +67,8 @@ help:
 	@echo "  make install-tools       - Install required tools"
 	@echo "  make check-gcp           - Verify GCP credentials"
 	@echo "  make update-kubeconfig   - Update kubectl configuration"
+	@echo "  make image-verify-arch   - Verify image has amd64+arm64 manifests"
+	@echo "  make k8s-cdn-status      - Show Cloud CDN status for ingress backend"
 	@echo "  make help                - Show this help message"
 	@echo ""
 
@@ -229,13 +239,110 @@ k8s-status:
 	@kubectl get service hello-world-service -n $(NAMESPACE) -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null && echo "" || echo "LoadBalancer not ready yet"
 
 k8s-logs:
-	@echo "📜 
-	
-	
-	
-	
-	ing logs from hello-world deployment..."
+	@echo "📜 Fetching logs from hello-world deployment..."
 	kubectl logs -n $(NAMESPACE) -l app=hello-world --tail=100
+
+k8s-ingress-ip:
+	@echo "🌐 Ingress external IP:"
+	@kubectl get ingress hello-world-ingress -n $(NAMESPACE) -o jsonpath='{.status.loadBalancer.ingress[0].ip}' && echo ""
+
+k8s-curl:
+	@IP=$$(kubectl get ingress hello-world-ingress -n $(NAMESPACE) -o jsonpath='{.status.loadBalancer.ingress[0].ip}'); \
+	if [ -z "$$IP" ]; then \
+		echo "❌ Ingress IP not ready yet"; \
+		exit 1; \
+	fi; \
+	echo "🌐 Curling http://$$IP/ (with retries)..."; \
+	for i in 1 2 3 4 5 6; do \
+		CODE=$$(curl -sS -o /dev/null -w "%{http_code}" --max-time 10 "http://$$IP/" || true); \
+		if [ "$$CODE" = "200" ]; then \
+			curl -i --max-time 10 "http://$$IP/"; \
+			exit 0; \
+		fi; \
+		echo "⏳ Attempt $$i/6 returned '$$CODE', retrying..."; \
+		sleep 5; \
+	done; \
+	echo "❌ HTTP endpoint not ready after retries"; \
+	exit 1
+
+k8s-curl-https:
+	@IP=$$(kubectl get ingress hello-world-ingress -n $(NAMESPACE) -o jsonpath='{.status.loadBalancer.ingress[0].ip}'); \
+	if [ -z "$$IP" ]; then \
+		echo "❌ Ingress IP not ready yet"; \
+		exit 1; \
+	fi; \
+	echo "🌐 Curling https://$$IP/"; \
+	curl -k -i --max-time 15 "https://$$IP/"
+
+k8s-smoke:
+	@echo "🧪 Running Kubernetes smoke test..."
+	@kubectl rollout status deployment/hello-world -n $(NAMESPACE) --timeout=180s >/dev/null || { \
+		echo "❌ Deployment rollout not complete"; \
+		exit 1; \
+	}
+	@PODS=$$(kubectl get pods -n $(NAMESPACE) --request-timeout=20s --no-headers 2>/tmp/k8s-smoke.err); \
+	if [ $$? -ne 0 ]; then \
+		echo "❌ Unable to query pods (API connectivity issue)"; \
+		cat /tmp/k8s-smoke.err; \
+		exit 1; \
+	fi; \
+	echo "$$PODS" | awk '{print $$2}' | grep -vqE '^([0-9]+/[0-9]+)$$' && { echo "❌ Unexpected pod readiness output"; exit 1; } || true; \
+	echo "$$PODS" | awk '{split($$2,a,"/"); if (a[1] != a[2]) exit 1} END {if (NR==0) exit 1}' || { echo "❌ Not all pods are ready"; exit 1; }
+	@IP=$$(kubectl get ingress hello-world-ingress -n $(NAMESPACE) --request-timeout=20s -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/tmp/k8s-smoke.err); \
+	if [ $$? -ne 0 ]; then \
+		echo "❌ Unable to query ingress (API connectivity issue)"; \
+		cat /tmp/k8s-smoke.err; \
+		exit 1; \
+	fi; \
+	if [ -z "$$IP" ]; then \
+		echo "❌ Ingress IP not ready yet"; \
+		exit 1; \
+	fi; \
+	echo "🌐 Testing http://$$IP/"; \
+	CODE=""; \
+	for i in 1 2 3 4 5 6; do \
+		CODE=$$(curl -sS -o /dev/null -w "%{http_code}" --max-time 10 "http://$$IP/" || true); \
+		[ "$$CODE" = "200" ] && break; \
+		echo "⏳ HTTP not ready yet (attempt $$i/6, code '$$CODE')"; \
+		sleep 5; \
+	done; \
+	if [ "$$CODE" != "200" ]; then \
+		echo "❌ Smoke test failed: HTTP $$CODE"; \
+		exit 1; \
+	fi; \
+	echo "✅ Smoke test passed (pods ready, ingress IP assigned, HTTP 200)"
+
+k8s-smoke-https:
+	@echo "🧪 Running Kubernetes HTTPS smoke test..."
+	@kubectl rollout status deployment/hello-world -n $(NAMESPACE) --timeout=180s >/dev/null || { \
+		echo "❌ Deployment rollout not complete"; \
+		exit 1; \
+	}
+	@PODS=$$(kubectl get pods -n $(NAMESPACE) --request-timeout=20s --no-headers 2>/tmp/k8s-smoke.err); \
+	if [ $$? -ne 0 ]; then \
+		echo "❌ Unable to query pods (API connectivity issue)"; \
+		cat /tmp/k8s-smoke.err; \
+		exit 1; \
+	fi; \
+	echo "$$PODS" | awk '{print $$2}' | grep -vqE '^([0-9]+/[0-9]+)$$' && { echo "❌ Unexpected pod readiness output"; exit 1; } || true; \
+	echo "$$PODS" | awk '{split($$2,a,"/"); if (a[1] != a[2]) exit 1} END {if (NR==0) exit 1}' || { echo "❌ Not all pods are ready"; exit 1; }
+	@IP=$$(kubectl get ingress hello-world-ingress -n $(NAMESPACE) --request-timeout=20s -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/tmp/k8s-smoke.err); \
+	if [ $$? -ne 0 ]; then \
+		echo "❌ Unable to query ingress (API connectivity issue)"; \
+		cat /tmp/k8s-smoke.err; \
+		exit 1; \
+	fi; \
+	if [ -z "$$IP" ]; then \
+		echo "❌ Ingress IP not ready yet"; \
+		exit 1; \
+	fi; \
+	echo "🌐 Testing https://$$IP/"; \
+	CODE=$$(curl -k -sS -o /dev/null -w "%{http_code}" --max-time 15 "https://$$IP/"); \
+	if [ "$$CODE" != "200" ]; then \
+		echo "❌ HTTPS smoke test failed: HTTP $$CODE"; \
+		exit 1; \
+	fi; \
+	echo "✅ HTTPS smoke test passed (pods ready, ingress IP assigned, HTTPS 200)"
 
 k8s-shell:
 	@echo "🐚 Opening shell in hello-world container..."
@@ -331,5 +438,36 @@ bg-logs-green:
 # Utility Commands
 update-kubeconfig:
 	@echo "🔧 Updating kubeconfig for GKE cluster..."
-	gcloud container clusters get-credentials $(GCP_PROJECT) --region=$(LOCATION) --project=$(GCP_PROJECT)
+	gcloud container clusters get-credentials $(CLUSTER_NAME) --region=$(LOCATION) --project=$(GCP_PROJECT)
 	@echo "✅ Kubeconfig updated."
+
+image-verify-arch:
+	@echo "🔎 Verifying multi-arch image support..."
+	@IMAGE_REF="us-central1-docker.pkg.dev/$(GCP_PROJECT)/$(REPO_NAME)/$(IMAGE_NAME):$(IMAGE_TAG)"; \
+	if ! command -v docker >/dev/null 2>&1; then \
+		echo "❌ docker is required for this check"; \
+		exit 1; \
+	fi; \
+	if ! docker buildx imagetools inspect "$$IMAGE_REF" >/tmp/image-verify-arch.out 2>/tmp/image-verify-arch.err; then \
+		echo "❌ Unable to inspect $$IMAGE_REF"; \
+		cat /tmp/image-verify-arch.err; \
+		exit 1; \
+	fi; \
+	cat /tmp/image-verify-arch.out | grep -q "linux/amd64" || { echo "❌ linux/amd64 not found"; exit 1; }; \
+	cat /tmp/image-verify-arch.out | grep -q "linux/arm64" || { echo "❌ linux/arm64 not found"; exit 1; }; \
+	echo "✅ Multi-arch image verified: $$IMAGE_REF"
+
+k8s-cdn-status:
+	@echo "📡 Checking Cloud CDN status on ingress backend..."
+	@BACKEND=$$(kubectl -n $(NAMESPACE) describe ingress hello-world-ingress 2>/tmp/k8s-cdn-status.err | sed -n 's/.*"\(k8s[0-9]-[^"]*hello-world-service-80[^"]*\)":"[A-Z]*".*/\1/p' | head -n1); \
+	if [ -z "$$BACKEND" ]; then \
+		BACKEND=$$(gcloud compute backend-services list --global --project $(GCP_PROJECT) --filter='name~hello-world-ns-hello-world-service-80' --format='value(name)' | head -n1); \
+	fi; \
+	if [ -z "$$BACKEND" ]; then \
+		echo "❌ Could not resolve ingress backend service name (ingress may still be provisioning)"; \
+		cat /tmp/k8s-cdn-status.err 2>/dev/null || true; \
+		exit 1; \
+	fi; \
+	echo "Backend: $$BACKEND"; \
+	gcloud compute backend-services describe "$$BACKEND" --global --project $(GCP_PROJECT) \
+		--format='yaml(name,enableCDN,cdnPolicy.cacheMode,timeoutSec,connectionDraining.drainingTimeoutSec,logConfig.enable)'

@@ -5,7 +5,9 @@ resources:
   - hello-world-ns.yaml
   - hello-world-deployment.yaml
   - hello-world-service.yaml
+  - hello-world-backend-config.yaml
   - hello-world-networkpolicy.yaml
+  - hello-world-ingress.yaml
 # Optionally add common labels
 # Optionally add common annotations
 # Example: Override image without editing the deployment file directly

@@ -1,52 +1,100 @@
 resource "helm_release" "prometheus" {
-  depends_on       = [google_container_node_pool.gke_pool]
+  depends_on = [
+    aws_eks_node_group.node_group,
+    aws_internet_gateway.eks,
+    aws_nat_gateway.nat,
+    aws_route_table.private,
+    aws_route_table.public,
+    aws_subnet.private,
+    aws_subnet.public,
+    aws_vpc.eks
+  ]
   name             = "prometheus"
   repository       = "https://prometheus-community.github.io/helm-charts"
   chart            = "kube-prometheus-stack"
+  version          = "81.5.0"
   namespace        = var.monitoring_ns
   create_namespace = true
-  timeout          = 600
+  timeout          = 900
   skip_crds        = false
   wait             = true
-  version          = "76.4.0"
+  replace          = true
 
-  set = [
-    {
-      name  = "alertmanager.enabled"
-      value = "true"
-    },
-    {
-      name  = "grafana.enabled"
-      value = "true"
-    },
-    {
-      name  = "grafana.service.type"
-      value = "ClusterIP"
-    },
-    {
-      name  = "grafana.service.port"
-      value = "80"
-    },
-    {
-      name  = "alertmanager.service.type"
-      value = "ClusterIP"
-    },
-    {
-      name  = "prometheus.service.type"
-      value = "ClusterIP"
-    },
-    {
-      name  = "coreDns.enabled"
-      value = "true"
-    },
-    {
-      name  = "coreDns.serviceMonitor.enabled"
-      value = "true"
-    },
-    {
-      name  = "prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues"
-      value = "false"
-    }
+  values = [
+    yamlencode({
+      # Reduce resource requirements
+      prometheus = {
+        prometheusSpec = {
+          replicas = 1
+          resources = {
+            requests = {
+              cpu    = "200m"
+              memory = "512Mi"
+            }
+            limits = {
+              cpu    = "1000m"
+              memory = "2Gi"
+            }
+          }
+          # Reduce retention to save resources
+          retention = "7d"
+          # Disable persistent storage to avoid PVC issues
+          storageSpec = {}
+        }
+      }
+      # Reduce Grafana resources
+      grafana = {
+        replicas = 1
+        resources = {
+          requests = {
+            cpu    = "100m"
+            memory = "128Mi"
+          }
+          limits = {
+            cpu    = "500m"
+            memory = "512Mi"
+          }
+        }
+        # Disable persistence to save resources
+        persistence = {
+          enabled = false
+        }
+      }
+      # Disable Alertmanager to save pod slots
+      alertmanager = {
+        enabled = false
+      }
+      # Disable admission webhooks that can cause timeouts
+      prometheusOperator = {
+        admissionWebhooks = {
+          enabled = false
+          # Prevent cert-manager or job from running
+          patch = {
+            enabled = false
+          }
+        }
+        # Remove TLS secret volume mounts since webhooks are disabled
+        tls = {
+          enabled = false
+        }
+        resources = {
+          requests = {
+            cpu    = "100m"
+            memory = "128Mi"
+          }
+          limits = {
+            cpu    = "500m"
+            memory = "512Mi"
+          }
+        }
+      }
+      # Keep kube-state-metrics but disable node-exporter (single node cluster)
+      kubeStateMetrics = {
+        enabled = true
+      }
+      nodeExporter = {
+        enabled = false
+      }
+    })
   ]
 }
-

@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: hello-world-tls
+  namespace: hello-world-ns
+type: kubernetes.io/tls
+stringData:
+  tls.crt: REPLACE_WITH_TLS_CERT_PEM
+  tls.key: REPLACE_WITH_TLS_KEY_PEM

@@ -6,14 +6,14 @@ resources:
   - hello-world-deployment-blue.yaml
   - hello-world-deployment-green.yaml
   - hello-world-service.yaml
+  - hello-world-backend-config.yaml
   - hello-world-networkpolicy.yaml
-
+  - hello-world-ingress.yaml
 # Common annotations (labels removed to avoid selector immutability issues)
 commonAnnotations:
   documentation: See docs/blue-green-deployment.md
   app.kubernetes.io/managed-by: kustomize
   deployment-strategy: blue-green
-
 # No global image transformer - each deployment has its own version
 # Blue: 1.3.2 (stable), Green: 1.4.0 (new version)
 # Update the deployment YAML files directly to change versions

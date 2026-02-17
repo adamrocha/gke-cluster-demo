@@ -13,7 +13,7 @@ GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
 get_current_version() {
-    kubectl get svc "$SERVICE" -n "$NAMESPACE" \
+    kubectl get svc "${SERVICE}" -n "${NAMESPACE}" \
         -o jsonpath='{.spec.selector.version}' 2>/dev/null || echo "unknown"
 }
 
@@ -21,22 +21,22 @@ check_deployment_ready() {
     local version=$1
     local deployment="hello-world-${version}"
     
-    if ! kubectl get deployment "$deployment" -n "$NAMESPACE" &>/dev/null; then
-        echo "❌ Deployment $deployment not found"
+    if ! kubectl get deployment "${deployment}" -n "${NAMESPACE}" &>/dev/null; then
+        echo "❌ Deployment ${deployment} not found"
         return 1
     fi
     
     local ready 
-    ready=$(kubectl get deployment "$deployment" -n "$NAMESPACE" \
+    ready=$(kubectl get deployment "${deployment}" -n "${NAMESPACE}" \
         -o jsonpath='{.status.readyReplicas}' 2>/dev/null || echo "0")
     local desired
-    desired=$(kubectl get deployment "$deployment" -n "$NAMESPACE" \
+    desired=$(kubectl get deployment "${deployment}" -n "${NAMESPACE}" \
         -o jsonpath='{.spec.replicas}' 2>/dev/null || echo "0")
     
-    if [ "$ready" = "$desired" ] && [ "$ready" != "0" ]; then
+    if [[ "${ready}" = "${desired}" ]] && [[ "${ready}" != "0" ]]; then
         return 0
     else
-        echo "⚠️  Deployment $deployment not ready: $ready/$desired replicas"
+        echo "⚠️  Deployment ${deployment} not ready: ${ready}/${desired} replicas"
         return 1
     fi
 }
@@ -46,26 +46,26 @@ switch_to() {
     local current_version
     current_version=$(get_current_version)
     
-    echo "🔄 Current version: $current_version"
-    echo "🎯 Target version: $target_version"
+    echo "🔄 Current version: ${current_version}"
+    echo "🎯 Target version: ${target_version}"
     
     # Check if target deployment is ready
-    if ! check_deployment_ready "$target_version"; then
-        echo "❌ Cannot switch to $target_version - deployment not ready"
+    if ! check_deployment_ready "${target_version}"; then
+        echo "❌ Cannot switch to ${target_version} - deployment not ready"
         exit 1
     fi
     
     # Perform switch
-    kubectl patch svc "$SERVICE" -n "$NAMESPACE" \
-        -p "{\"spec\":{\"selector\":{\"version\":\"$target_version\"}}}"
+    kubectl patch svc "${SERVICE}" -n "${NAMESPACE}" \
+        -p "{\"spec\":{\"selector\":{\"version\":\"${target_version}\"}}}"
     
-    echo "✅ Traffic switched to $target_version"
+    echo "✅ Traffic switched to ${target_version}"
     
     # Wait a moment and verify
     sleep 2
     local new_version
     new_version=$(get_current_version)
-    if [ "$new_version" = "$target_version" ]; then
+    if [[ "${new_version}" = "${target_version}" ]]; then
         echo -e "${GREEN}✓${NC} Switch verified successfully"
     else
         echo -e "${RED}✗${NC} Switch verification failed"
@@ -80,23 +80,23 @@ show_status() {
     
     local current
     current=$(get_current_version)
-    echo "🎯 Active version: $current"
+    echo "🎯 Active version: ${current}"
     echo ""
     
     echo "🔵 Blue Deployment:"
-    kubectl get deployment hello-world-blue -n "$NAMESPACE" 2>/dev/null || echo "  Not deployed"
+    kubectl get deployment hello-world-blue -n "${NAMESPACE}" 2>/dev/null || echo "  Not deployed"
     echo ""
     
     echo "🟢 Green Deployment:"
-    kubectl get deployment hello-world-green -n "$NAMESPACE" 2>/dev/null || echo "  Not deployed"
+    kubectl get deployment hello-world-green -n "${NAMESPACE}" 2>/dev/null || echo "  Not deployed"
     echo ""
     
     echo "🌐 Service:"
-    kubectl get svc "$SERVICE" -n "$NAMESPACE" 2>/dev/null || echo "  Not found"
+    kubectl get svc "${SERVICE}" -n "${NAMESPACE}" 2>/dev/null || echo "  Not found"
     echo ""
     
     echo "📦 Pods:"
-    kubectl get pods -n "$NAMESPACE" -l app=hello-world 2>/dev/null || echo "  No pods found"
+    kubectl get pods -n "${NAMESPACE}" -l app=hello-world 2>/dev/null || echo "  No pods found"
 }
 
 rollback() {
@@ -104,17 +104,17 @@ rollback() {
     current=$(get_current_version)
     local target=""
     
-    if [ "$current" = "blue" ]; then
+    if [[ "${current}" = "blue" ]]; then
         target="green"
-    elif [ "$current" = "green" ]; then
+    elif [[ "${current}" = "green" ]]; then
         target="blue"
     else
-        echo "❌ Cannot determine rollback target from current: $current"
+        echo "❌ Cannot determine rollback target from current: ${current}"
         exit 1
     fi
     
-    echo "⏮️  Rolling back from $current to $target"
-    switch_to "$target"
+    echo "⏮️  Rolling back from ${current} to ${target}"
+    switch_to "${target}"
 }
 
 case "${1:-status}" in

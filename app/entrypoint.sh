@@ -10,17 +10,17 @@ mkdir -p "${CERT_DIR}"
 
 # Generate self-signed certificate
 if [ ! -f "${CERT_FILE}" ] || [ ! -f "${KEY_FILE}" ]; then
-    echo "Generating self-signed certificate..."
-    openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-        -keyout "${KEY_FILE}" \
-        -out "${CERT_FILE}" \
-        -subj "/C=US/ST=State/L=City/O=Organization/OU=Department/CN=hello-world-demo" \
-        -addext "subjectAltName=DNS:localhost,DNS:*.elb.amazonaws.com,IP:127.0.0.1" 2>/dev/null || \
-    openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-        -keyout "${KEY_FILE}" \
-        -out "${CERT_FILE}" \
-        -subj "/C=US/ST=State/L=City/O=Organization/OU=Department/CN=hello-world-demo"
-    echo "Certificate generated successfully."
+	echo "Generating self-signed certificate..."
+	openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+		-keyout "${KEY_FILE}" \
+		-out "${CERT_FILE}" \
+		-subj "/C=US/ST=State/L=City/O=Organization/OU=Department/CN=hello-world-demo" \
+		-addext "subjectAltName=DNS:localhost,DNS:*.elb.amazonaws.com,IP:127.0.0.1" 2>/dev/null ||
+		openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+			-keyout "${KEY_FILE}" \
+			-out "${CERT_FILE}" \
+			-subj "/C=US/ST=State/L=City/O=Organization/OU=Department/CN=hello-world-demo"
+	echo "Certificate generated successfully."
 fi
 
 # Set proper permissions

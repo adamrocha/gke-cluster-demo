@@ -16,3 +16,6 @@ crash.*.log
 
 # .vscode
 .vscode/
+
+# Trunk - A tool for managing multiple Git repositories.
+.trunk/
