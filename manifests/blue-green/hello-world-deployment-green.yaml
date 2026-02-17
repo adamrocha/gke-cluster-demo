@@ -32,7 +32,7 @@ spec:
       automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
-        runAsUser: 101
+        runAsUser: 10001
       volumes:
         - name: nginx-cache
           emptyDir: {}
@@ -67,7 +67,7 @@ spec:
               cpu: 50m
               memory: 32Mi
           securityContext:
-            runAsUser: 101
+            runAsUser: 10001
             runAsNonRoot: true
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
