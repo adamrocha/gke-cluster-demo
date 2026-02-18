@@ -1,0 +1,35 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: hello-world-netpol
+  namespace: hello-world-ns
+  labels:
+    app: hello-world
+  annotations:
+    description: Network policy for hello-world application
+spec:
+  podSelector:
+    matchLabels:
+      app: hello-world
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow traffic to application ports from any source
+    - ports:
+        - protocol: TCP
+          port: 8080
+        - protocol: TCP
+          port: 8443
+  egress:
+    # Allow DNS queries
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+    # Allow all outbound traffic (can be restricted further based on requirements)
+    - to:
+        - podSelector: {}

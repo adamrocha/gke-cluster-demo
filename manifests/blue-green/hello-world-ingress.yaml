@@ -1,0 +1,30 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hello-world-ingress
+  namespace: hello-world-ns
+  annotations:
+    # Use GCE ingress controller (creates External HTTP(S) Load Balancer)
+    kubernetes.io/ingress.class: gce
+    # Attach Cloud Armor security policy for DDoS and WAF protection
+    cloud.google.com/armor-config: '{"cloud-armor-policy": "cloud-armor-policy"}'
+    # Use the pre-created global static IP
+    kubernetes.io/ingress.global-static-ip-name: gke-lb-ip
+    # Attach GCE pre-shared SSL certificate managed by Terraform
+    ingress.gcp.kubernetes.io/pre-shared-cert: hello-world-ingress-cert
+    # Keep HTTP enabled while also serving HTTPS
+    kubernetes.io/ingress.allow-http: "true"
+  labels:
+    app: hello-world
+    deployment-strategy: blue-green
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: hello-world-service
+                port:
+                  number: 80

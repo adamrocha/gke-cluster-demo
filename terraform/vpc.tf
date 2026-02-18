@@ -25,11 +25,11 @@ resource "google_compute_subnetwork" "gke_subnet" {
     ip_cidr_range = "10.20.0.0/16"
   }
 
-  # log_config {
-  #   aggregation_interval = "INTERVAL_5_SEC"       # Options: INTERVAL_5_SEC, INTERVAL_30_SEC, INTERVAL_1_MIN
-  #   flow_sampling        = 0.5                    # Sampling rate between 0.0 and 1.0
-  #   metadata             = "INCLUDE_ALL_METADATA" # Options: INCLUDE_ALL_METADATA, EXCLUDE_ALL_METADATA, CUSTOM_METADATA
-  # }
+  log_config {
+    aggregation_interval = "INTERVAL_1_MIN"       # Options: INTERVAL_5_SEC, INTERVAL_30_SEC, INTERVAL_1_MIN
+    flow_sampling        = 1.0                    # Sampling rate between 0.0 and 1.0
+    metadata             = "EXCLUDE_ALL_METADATA" # Options: INCLUDE_ALL_METADATA, EXCLUDE_ALL_METADATA, CUSTOM_METADATA
+  }
 }
 
 resource "google_compute_global_address" "gke_lb_ip" {
@@ -39,25 +39,63 @@ resource "google_compute_global_address" "gke_lb_ip" {
   address_type = "EXTERNAL"
 }
 
-resource "google_compute_firewall" "allow_internal" {
-  name        = "allow-internal"
-  description = "Allow internal traffic within the GKE VPC"
+resource "google_compute_firewall" "allow_internal_icmp" {
+  name        = "allow-internal-icmp"
+  description = "Allow ICMP for diagnostics within GKE VPC"
   network     = google_compute_network.gke_vpc.name
 
   allow {
     protocol = "icmp"
   }
+  source_ranges = ["10.0.0.0/16"]
+  direction     = "INGRESS"
+  priority      = 65434
+}
+
+resource "google_compute_firewall" "allow_internal_dns" {
+  name        = "allow-internal-dns"
+  description = "Allow DNS (port 53) within GKE VPC"
+  network     = google_compute_network.gke_vpc.name
+
   allow {
     protocol = "tcp"
-    ports    = ["0-65535"]
+    ports    = ["53"]
   }
   allow {
     protocol = "udp"
-    ports    = ["0-65535"]
+    ports    = ["53"]
   }
   source_ranges = ["10.0.0.0/16"]
   direction     = "INGRESS"
-  priority      = 65534
+  priority      = 65433
+}
+
+resource "google_compute_firewall" "allow_internal_kubelet" {
+  name        = "allow-internal-kubelet"
+  description = "Allow Kubelet API and kube-proxy metrics within GKE VPC"
+  network     = google_compute_network.gke_vpc.name
+
+  allow {
+    protocol = "tcp"
+    ports    = ["10250", "10256"]
+  }
+  source_ranges = ["10.0.0.0/16"]
+  direction     = "INGRESS"
+  priority      = 65432
+}
+
+resource "google_compute_firewall" "allow_internal_vxlan" {
+  name        = "allow-internal-vxlan"
+  description = "Allow VXLAN overlay network traffic within GKE VPC"
+  network     = google_compute_network.gke_vpc.name
+
+  allow {
+    protocol = "udp"
+    ports    = ["4789"]
+  }
+  source_ranges = ["10.0.0.0/16"]
+  direction     = "INGRESS"
+  priority      = 65431
 }
 
 resource "google_compute_firewall" "allow_iap_ssh" {

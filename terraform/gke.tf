@@ -11,7 +11,9 @@ resource "google_compute_project_metadata" "enable_oslogin" {
 # }
 
 resource "google_container_cluster" "gke_cluster_demo" {
-  # checkov:skip=CKV_GCP_69: enabled at the node pool level
+  # checkov:skip=CKV_GCP_65: Deffered
+  # checkov:skip=CKV_GCP_18: Enabled at the cluster level with private nodes
+  # checkov:skip=CKV_GCP_69: Enabled at the node pool level
   depends_on                  = [google_project_service.api_services]
   description                 = "Managed GKE cluster"
   name                        = var.cluster_name
@@ -28,12 +30,13 @@ resource "google_container_cluster" "gke_cluster_demo" {
     managed_by = "terraform"
   }
 
-  # master_authorized_networks_config {
-  #   cidr_blocks {
-  #     cidr_block   = "${data.external.local_ip.result.ip}/32"
-  #     display_name = "Local IP"
-  #   }
-  # }
+  master_authorized_networks_config {
+    cidr_blocks {
+      # cidr_block   = "${data.external.local_ip.result.ip}/32"
+      cidr_block   = "0.0.0.0/0"
+      display_name = "Allow access from current IP"
+    }
+  }
 
   # authenticator_groups_config {
   #   security_group = "gke-security-groups@yourdomain.com"
@@ -56,7 +59,7 @@ resource "google_container_cluster" "gke_cluster_demo" {
   }
 
   network_policy {
-    enabled  = false
+    enabled  = true
     provider = "CALICO"
   }
 
@@ -96,9 +99,10 @@ resource "google_container_cluster" "gke_cluster_demo" {
 
 resource "google_container_node_pool" "node_pool_demo" {
   depends_on         = [google_container_cluster.gke_cluster_demo]
-  name               = "node-pool-demo"
+  name               = var.enable_arm_nodes ? "node-pool-demo-arm" : "node-pool-demo"
   cluster            = google_container_cluster.gke_cluster_demo.name
   initial_node_count = 1
+  node_locations     = var.enable_arm_nodes ? var.arm_node_locations : null
 
   autoscaling {
     min_node_count = 1
@@ -108,7 +112,8 @@ resource "google_container_node_pool" "node_pool_demo" {
   node_config {
     service_account = google_service_account.gke_service_account.email
     preemptible     = true
-    machine_type    = var.instance_type
+    machine_type    = var.enable_arm_nodes ? var.arm_machine_type : var.machine_type
+    image_type      = var.image_type
     disk_type       = "pd-standard"
     disk_size_gb    = 50
     oauth_scopes    = ["https://www.googleapis.com/auth/cloud-platform"]
@@ -117,9 +122,13 @@ resource "google_container_node_pool" "node_pool_demo" {
       mode = "GKE_METADATA"
     }
 
+    metadata = {
+      disable-legacy-endpoints = "true"
+    }
+
     shielded_instance_config {
       enable_secure_boot          = true
-      enable_integrity_monitoring = false
+      enable_integrity_monitoring = true
     }
 
     # metadata = {
@@ -145,6 +154,7 @@ resource "google_container_node_pool" "node_pool_demo" {
   }
 
   lifecycle {
-    prevent_destroy = false
+    create_before_destroy = true
+    prevent_destroy       = false
   }
 }

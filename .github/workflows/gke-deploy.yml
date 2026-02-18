@@ -7,8 +7,6 @@ concurrency:
 on:
   push:
     branches: [main, stage, dev]
-  pull_request:
-    branches: [main, stage, dev]
   delete:
 
 permissions:
@@ -22,7 +20,7 @@ env:
   IMAGE_NAME: hello-world
   REPO_NAME: hello-world-repo
   IMAGE_TAG: 1.2.5
-  TERRAFORM_VERSION: "1.13.1"
+  TERRAFORM_VERSION: 1.13.1
   PYTHON_VERSION: "3.11"
 
 jobs:
@@ -109,9 +107,27 @@ jobs:
   # Check if branch deletion should trigger destroy
   check_condition:
     if: github.event_name == 'delete'
-    uses: ./.github/workflows/destroy-logic.yml
-    with:
-      branch_prefixes: delete/,nuke/
+    runs-on: ubuntu-latest
+    outputs:
+      should_destroy: ${{ steps.set.outputs.destroy }}
+    steps:
+      - id: set
+        run: |
+          prefixes="delete/,nuke/"
+          destroy=false
+
+          if [ "${{ github.event.ref_type }}" = "branch" ]; then
+            branch="${{ github.event.ref }}"
+            IFS=',' read -ra PREFIX_ARRAY <<< "$prefixes"
+            for prefix in "${PREFIX_ARRAY[@]}"; do
+              if [[ "$branch" == "$prefix"* ]]; then
+                destroy=true
+                break
+              fi
+            done
+          fi
+
+          echo "destroy=$destroy" >> "$GITHUB_OUTPUT"
 
   # Destroy infrastructure on feature branch deletion
   terraform-destroy:

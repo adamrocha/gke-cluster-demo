@@ -16,34 +16,49 @@ variable "zone" {
   type        = string
 }
 
-variable "environment" {
-  description = "The environment for the GKE cluster (e.g., dev, staging, prod)."
-  default     = "dev"
-  type        = string
-}
-
 variable "cluster_name" {
   description = "The name of the GKE cluster."
   default     = "gke-cluster-demo"
   type        = string
 }
 
-variable "terraform_state_bucket" {
-  description = "The name of the GCS bucket for storing Terraform state."
-  default     = "terraform-state-bucket-1337"
-  type        = string
+# variable "terraform_state_bucket" {
+#   description = "The name of the GCS bucket for storing Terraform state."
+#   default     = "terraform-state-bucket-1337"
+#   type        = string
+# }
+
+variable "enable_arm_nodes" {
+  description = "Enable ARM-based node machine type when true."
+  default     = false
+  type        = bool
 }
 
-variable "kubeconfig_path" {
-  description = "The path to the kubeconfig file for accessing the GKE cluster."
-  default     = "~/.kube/config"
-  type        = string
-}
-
-variable "instance_type" {
+variable "machine_type" {
   description = "The machine type for the GKE nodes."
-  default     = "e2-medium"
+  # default     = "e2-micro"
+  # default     = "e2-small"
+  default = "e2-medium"
+  type    = string
+}
+
+variable "arm_machine_type" {
+  description = "The ARM-based machine type for the GKE nodes."
+  default     = "t2a-standard-2"
   type        = string
+}
+
+variable "arm_node_locations" {
+  description = "Zones to use for ARM node pools when enable_arm_nodes is true."
+  default     = ["us-central1-a", "us-central1-b", "us-central1-f"]
+  type        = list(string)
+}
+
+variable "image_type" {
+  description = "The image type for the GKE nodes."
+  # ARM and x86 nodes both support COS_CONTAINERD on GKE.
+  default = "COS_CONTAINERD"
+  type    = string
 }
 
 variable "repo_name" {
@@ -64,22 +79,6 @@ variable "image_tag" {
   type        = string
 }
 
-variable "image_digest" {
-  description = "Digest of the Docker image to be used in the deployment"
-  default     = ""
-  type        = string
-  # validation {
-  #   condition     = length(var.image_digest) > 0
-  #   error_message = "The image_digest variable must not be empty. Please provide a valid Docker image digest."
-  # }
-}
-
-variable "hello_world_ns" {
-  description = "Name of the Kubernetes namespace"
-  default     = "hello-world-ns"
-  type        = string
-}
-
 variable "vault_ns" {
   description = "Name of the Vault namespace"
   default     = "vault-ns"
@@ -89,18 +88,6 @@ variable "vault_ns" {
 variable "monitoring_ns" {
   description = "Name of the monitoring namespace"
   default     = "monitoring-ns"
-  type        = string
-}
-
-variable "service" {
-  description = "Name of the Kubernetes service"
-  default     = "hello-world-service"
-  type        = string
-}
-
-variable "deployment" {
-  description = "Name of the Kubernetes deployment"
-  default     = "hello-world"
   type        = string
 }
 

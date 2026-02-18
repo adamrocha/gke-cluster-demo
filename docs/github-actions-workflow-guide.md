@@ -15,7 +15,6 @@ The GKE deployment workflow follows the same pattern as the EKS cluster demo for
    - Builds and pushes Docker image to Artifact Registry
    - Runs on: `push` to main/stage/dev, `pull_request`
    - Dependencies: None
-   
 2. **deploy** - Update Deployment
    - Applies Kubernetes manifests
    - Updates deployment image using `kubectl set image`
@@ -88,6 +87,7 @@ Deleting branches with these prefixes triggers infrastructure destruction:
 - `nuke/*` - Alternative deletion trigger
 
 **Example:**
+
 ```bash
 # Create a temporary environment
 git checkout -b delete/testing-feature
@@ -210,8 +210,8 @@ The deploy job includes automatic rollback:
 
 ```yaml
 if ! kubectl rollout status deployment/hello-world -n hello-world-ns --timeout=300s; then
-  kubectl rollout undo deployment/hello-world -n hello-world-ns
-  exit 1
+kubectl rollout undo deployment/hello-world -n hello-world-ns
+exit 1
 fi
 ```
 
@@ -247,16 +247,16 @@ check_condition:
 
 ## Comparison: GKE vs EKS Workflows
 
-| Aspect | EKS Workflow | GKE Workflow |
-|--------|--------------|--------------|
-| **Jobs** | terraform-apply, deploy, check_condition, terraform-destroy | Same |
-| **Auth** | AWS credentials via OIDC | GCP service account JSON key |
-| **Kubeconfig** | `aws eks update-kubeconfig` | `gcloud container clusters get-credentials` |
-| **Registry** | Amazon ECR | Google Artifact Registry |
-| **Docker Auth** | `aws ecr get-login-password` | `gcloud auth configure-docker` |
-| **Deployment** | kubectl apply + set image | Same |
-| **Destroy Trigger** | Branch prefixes: delete/, nuke/ | Same |
-| **Concurrency** | terraform-${{ github.ref_name }} | Same |
+| Aspect              | EKS Workflow                                                | GKE Workflow                                |
+| ------------------- | ----------------------------------------------------------- | ------------------------------------------- |
+| **Jobs**            | terraform-apply, deploy, check_condition, terraform-destroy | Same                                        |
+| **Auth**            | AWS credentials via OIDC                                    | GCP service account JSON key                |
+| **Kubeconfig**      | `aws eks update-kubeconfig`                                 | `gcloud container clusters get-credentials` |
+| **Registry**        | Amazon ECR                                                  | Google Artifact Registry                    |
+| **Docker Auth**     | `aws ecr get-login-password`                                | `gcloud auth configure-docker`              |
+| **Deployment**      | kubectl apply + set image                                   | Same                                        |
+| **Destroy Trigger** | Branch prefixes: delete/, nuke/                             | Same                                        |
+| **Concurrency**     | terraform-${{ github.ref_name }}                            | Same                                        |
 
 ## Best Practices
 
@@ -326,11 +326,13 @@ terraform force-unlock LOCK_ID
 ### Deploying a New Version
 
 1. Update image tag in `gke-deploy.yml`:
+
    ```yaml
    IMAGE_TAG: 1.2.6
    ```
 
 2. Push to dev branch:
+
    ```bash
    git add .github/workflows/gke-deploy.yml
    git commit -m "Bump image version to 1.2.6"

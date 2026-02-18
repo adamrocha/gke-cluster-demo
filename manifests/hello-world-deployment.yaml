@@ -27,9 +27,17 @@ spec:
         app: hello-world
     spec:
       automountServiceAccountToken: false
+      tolerations:
+        - key: kubernetes.io/arch
+          operator: Equal
+          value: arm64
+          effect: NoSchedule
+      imagePullSecrets:
+        - name: artifact-registry-credentials
       securityContext:
         runAsNonRoot: true
-        runAsUser: 101
+        runAsUser: 10001
+        runAsGroup: 10001
       volumes:
         - name: nginx-cache
           emptyDir: {}
@@ -39,7 +47,7 @@ spec:
           emptyDir: {}
       containers:
         - name: hello-world
-          # Update this image reference with your ECR image and digest
+          # Image from trusted Google Artifact Registry with version tag
           image: us-central1-docker.pkg.dev/gke-cluster-458701/hello-world-repo/hello-world:1.2.5
           imagePullPolicy: Always
           ports:
@@ -64,7 +72,8 @@ spec:
               cpu: 50m
               memory: 32Mi
           securityContext:
-            runAsUser: 101
+            runAsUser: 10001
+            runAsGroup: 10001
             runAsNonRoot: true
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
