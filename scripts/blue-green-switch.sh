@@ -50,10 +50,7 @@ switch_to() {
 	echo "🎯 Target version: ${target_version}"
 
 	# Check if target deployment is ready
-	if ! check_deployment_ready "${target_version}"; then
-		echo "❌ Cannot switch to ${target_version} - deployment not ready"
-		exit 1
-	fi
+	check_deployment_ready "${target_version}"
 
 	# Perform switch
 	kubectl patch svc "${SERVICE}" -n "${NAMESPACE}" \

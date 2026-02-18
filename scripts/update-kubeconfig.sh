@@ -5,6 +5,6 @@ PROJECT_ID="gke-cluster-458701"
 REGION="us-central1"
 CLUSTER_NAME="gke-cluster-demo"
 
-gcloud container clusters get-credentials "$CLUSTER_NAME" \
-  --region "$REGION" \
-  --project "$PROJECT_ID"
+gcloud container clusters get-credentials "${CLUSTER_NAME}" \
+	--region "${REGION}" \
+	--project "${PROJECT_ID}"
