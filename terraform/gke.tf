@@ -11,7 +11,7 @@ resource "google_compute_project_metadata" "enable_oslogin" {
 # }
 
 resource "google_container_cluster" "gke_cluster_demo" {
-  # checkov:skip=CKV_GCP_65: Deffered
+  # checkov:skip=CKV_GCP_65: Deferred
   # checkov:skip=CKV_GCP_18: Enabled at the cluster level with private nodes
   # checkov:skip=CKV_GCP_69: Enabled at the node pool level
   depends_on                  = [google_project_service.api_services]

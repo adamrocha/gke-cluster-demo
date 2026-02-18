@@ -1,0 +1,46 @@
+---
+- name: Remote GKE node SSH smoke test (run from inside VPC)
+  hosts: all
+  gather_facts: false
+  serial: 10
+  become: false
+
+  tasks:
+    - name: Wait for SSH connectivity
+      ansible.builtin.wait_for_connection:
+        timeout: 60
+
+    - name: Verify Ansible ping module
+      ansible.builtin.ping:
+
+    - name: Verify Python 3 is available on remote host
+      ansible.builtin.raw: python3 --version
+      register: python_check
+      changed_when: false
+
+    - name: Collect remote kernel info
+      ansible.builtin.command: uname -a
+      register: uname_output
+      changed_when: false
+
+    - name: Check kubelet service status
+      ansible.builtin.command: systemctl is-active kubelet
+      register: kubelet_status
+      changed_when: false
+      failed_when: kubelet_status.rc != 0
+
+    - name: Check containerd service status
+      ansible.builtin.command: systemctl is-active containerd
+      register: containerd_status
+      changed_when: false
+      failed_when: containerd_status.rc != 0
+
+    - name: Print remote host summary
+      ansible.builtin.debug:
+        msg:
+          - "host={{ inventory_hostname }}"
+          - "ansible_host={{ ansible_host | default('n/a') }}"
+          - "python={{ python_check.stdout | default('unknown') }}"
+          - "kubelet={{ kubelet_status.stdout | default('unknown') }}"
+          - "containerd={{ containerd_status.stdout | default('unknown') }}"
+          - "kernel={{ uname_output.stdout | default('unknown') }}"

@@ -1,7 +1,65 @@
-- name: GCP instance test
-  hosts: all
-  become: true
-  become_method: sudo
+- name: Controller-side inventory and cluster smoke test
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    discovered_hosts: "{{ groups['all'] | default([]) }}"
+
   tasks:
-    - name: Ping test
-      ansible.builtin.ping:
+    - name: Assert inventory has discovered hosts
+      ansible.builtin.assert:
+        that:
+          - discovered_hosts | length > 0
+        fail_msg: No hosts discovered by dynamic GCP inventory
+        success_msg: "Dynamic inventory discovered {{ discovered_hosts | length }} host(s)"
+
+    - name: Assert each host has ansible_host set
+      ansible.builtin.assert:
+        that:
+          - hostvars[item].ansible_host is defined
+        fail_msg: "Host {{ item }} is missing ansible_host"
+      loop: "{{ discovered_hosts }}"
+
+    - name: Show discovered host mapping
+      ansible.builtin.debug:
+        msg: "{{ item }} -> {{ hostvars[item].ansible_host }}"
+      loop: "{{ discovered_hosts }}"
+
+    - name: Check whether kubectl is available
+      ansible.builtin.command: command -v kubectl
+      register: kubectl_binary
+      changed_when: false
+      failed_when: false
+
+    - name: Verify kubectl can access the cluster
+      ansible.builtin.command: kubectl get nodes --no-headers
+      register: kubectl_nodes
+      changed_when: false
+      failed_when: false
+      when: kubectl_binary.rc == 0
+
+    - name: Assert at least one Kubernetes node is returned when kubectl is connected
+      ansible.builtin.assert:
+        that:
+          - kubectl_nodes.stdout_lines | length > 0
+        fail_msg: kubectl did not return any nodes
+        success_msg: "kubectl returned {{ kubectl_nodes.stdout_lines | length }} node(s)"
+      when:
+        - kubectl_binary.rc == 0
+        - kubectl_nodes.rc == 0
+
+    - name: Show node status lines when available
+      ansible.builtin.debug:
+        var: kubectl_nodes.stdout_lines
+      when:
+        - kubectl_binary.rc == 0
+        - kubectl_nodes.rc == 0
+
+    - name: Show kubectl diagnostic when unavailable or disconnected
+      ansible.builtin.debug:
+        msg: >-
+          kubectl check skipped or unavailable
+          (binary_rc={{ kubectl_binary.rc | default('n/a') }},
+          cluster_rc={{ kubectl_nodes.rc | default('n/a') }})
+      when:
+        - kubectl_binary.rc != 0 or (kubectl_nodes is defined and kubectl_nodes.rc != 0)
