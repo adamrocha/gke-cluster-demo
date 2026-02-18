@@ -199,6 +199,17 @@ jobs:
       - name: Update kubeconfig
         run: gcloud container clusters get-credentials ${{ env.GKE_CLUSTER_NAME }} --region ${{ env.GCP_REGION }} --project ${{ env.GCP_PROJECT_ID }}
 
+      - name: Create Artifact Registry pull secret
+        run: |
+          kubectl apply -f manifests/hello-world-ns.yaml
+          kubectl create secret docker-registry artifact-registry-credentials \
+            -n hello-world-ns \
+            --docker-server=${{ env.GCP_REGION }}-docker.pkg.dev \
+            --docker-username=oauth2accesstoken \
+            --docker-password="$(gcloud auth print-access-token)" \
+            --docker-email=unused@example.com \
+            --dry-run=client -o yaml | kubectl apply -f -
+
       - name: Apply Kubernetes manifests
         run: |
           kubectl apply -f manifests/hello-world-ns.yaml
@@ -222,5 +233,13 @@ jobs:
               echo "Rolling back..."
               kubectl rollout undo deployment/hello-world -n hello-world-ns
             fi
+            exit 1
+          fi
+
+      - name: Verify ingress health
+        run: |
+          if ! make k8s-health-ci; then
+            echo "::error::Ingress health checks failed"
+            make k8s-ingress-health || true
             exit 1
           fi

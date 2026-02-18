@@ -24,7 +24,7 @@ IMAGE_TAG := 1.2.5
 	tf-bucket create-bucket enable-versioning set-lifecycle add-labels delete-artifact-repo nuke-tf-bucket \
 	k8s-validate k8s-validate-server k8s-apply-ns k8s-apply k8s-delete k8s-status k8s-logs \
 	k8s-events k8s-create-image-pull-secret k8s-fix-image-pull-secret \
-	k8s-ingress-ip k8s-curl k8s-curl-https k8s-smoke k8s-smoke-https k8s-shell k8s-describe k8s-restart \
+	k8s-ingress-ip k8s-ingress-health k8s-ingress-health-ci k8s-curl k8s-curl-ci k8s-health-ci k8s-curl-https k8s-smoke k8s-smoke-https k8s-shell k8s-describe k8s-restart \
 	k8s-kustomize-validate k8s-kustomize-apply k8s-kustomize-diff k8s-kustomize-delete \
 	bg-deploy bg-status bg-switch-blue bg-switch-green bg-rollback bg-cleanup bg-test-blue bg-test-green bg-logs-blue bg-logs-green \
 	update-kubeconfig image-verify-arch k8s-cdn-status
@@ -55,7 +55,11 @@ help:
 	@echo "  make k8s-create-image-pull-secret - Create/update Artifact Registry pull secret"
 	@echo "  make k8s-fix-image-pull-secret    - Refresh pull secret and restart deployment"
 	@echo "  make k8s-ingress-ip      - Print ingress external IP"
+	@echo "  make k8s-ingress-health  - Show ingress and backend health details"
+	@echo "  make k8s-ingress-health-ci - CI pass/fail ingress backend health check"
 	@echo "  make k8s-curl            - Curl ingress endpoint"
+	@echo "  make k8s-curl-ci         - CI pass/fail HTTP 200 check"
+	@echo "  make k8s-health-ci       - CI gate: ingress backend + HTTP checks"
 	@echo "  make k8s-curl-https      - Curl ingress endpoint over HTTPS"
 	@echo "  make k8s-smoke           - Run pods/ingress/http smoke test"
 	@echo "  make k8s-smoke-https     - Run pods/ingress/https smoke test"
@@ -210,7 +214,7 @@ k8s-apply-ns:
 	kubectl apply -f manifests/hello-world-ns.yaml
 	@echo "✅ Namespace created."
 
-k8s-apply:
+k8s-apply: k8s-create-image-pull-secret
 	@echo "🚀 Deploying Kubernetes manifests with kustomize..."
 	kubectl apply -k manifests/
 	@echo "✅ Kubernetes resources deployed."
@@ -253,7 +257,7 @@ k8s-events:
 	@echo "📅 Fetching recent events from $(NAMESPACE)..."
 	kubectl get events -n $(NAMESPACE) --sort-by=.lastTimestamp
 
-k8s-create-image-pull-secret:
+k8s-create-image-pull-secret: k8s-apply-ns
 	@echo "🔐 Creating/updating Artifact Registry pull secret in $(NAMESPACE)..."
 	@kubectl create secret docker-registry artifact-registry-credentials -n $(NAMESPACE) \
 		--docker-server=us-central1-docker.pkg.dev \
@@ -279,10 +283,27 @@ k8s-fix-image-pull-secret: k8s-create-image-pull-secret
 
 k8s-ingress-ip:
 	@echo "🌐 Ingress external IP:"
-	@kubectl get ingress $(INGRESS_NAME) -n $(NAMESPACE) -o jsonpath='{.status.loadBalancer.ingress[0].ip}' && echo ""
+	@IP=$$(kubectl get ingress $(INGRESS_NAME) -n $(NAMESPACE) -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null); \
+	if [ -z "$$IP" ]; then \
+		STATIC_IP_NAME=$$(kubectl get ingress $(INGRESS_NAME) -n $(NAMESPACE) -o jsonpath='{.metadata.annotations.kubernetes\.io/ingress\.global-static-ip-name}' 2>/dev/null); \
+		if [ -n "$$STATIC_IP_NAME" ]; then \
+			IP=$$(gcloud compute addresses describe "$$STATIC_IP_NAME" --global --project $(GCP_PROJECT) --format='value(address)' 2>/dev/null || true); \
+		fi; \
+	fi; \
+	if [ -z "$$IP" ]; then \
+		echo "Ingress IP not ready yet"; \
+		exit 1; \
+	fi; \
+	echo "$$IP"
 
 k8s-curl:
-	@IP=$$(kubectl get ingress $(INGRESS_NAME) -n $(NAMESPACE) -o jsonpath='{.status.loadBalancer.ingress[0].ip}'); \
+	@IP=$$(kubectl get ingress $(INGRESS_NAME) -n $(NAMESPACE) -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null); \
+	if [ -z "$$IP" ]; then \
+		STATIC_IP_NAME=$$(kubectl get ingress $(INGRESS_NAME) -n $(NAMESPACE) -o jsonpath='{.metadata.annotations.kubernetes\.io/ingress\.global-static-ip-name}' 2>/dev/null); \
+		if [ -n "$$STATIC_IP_NAME" ]; then \
+			IP=$$(gcloud compute addresses describe "$$STATIC_IP_NAME" --global --project $(GCP_PROJECT) --format='value(address)' 2>/dev/null || true); \
+		fi; \
+	fi; \
 	if [ -z "$$IP" ]; then \
 		echo "❌ Ingress IP not ready yet"; \
 		exit 1; \
@@ -300,8 +321,37 @@ k8s-curl:
 	echo "❌ HTTP endpoint not ready after retries"; \
 	exit 1
 
+k8s-curl-ci:
+	@IP=$$(kubectl get ingress $(INGRESS_NAME) -n $(NAMESPACE) -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null); \
+	if [ -z "$$IP" ]; then \
+		STATIC_IP_NAME=$$(kubectl get ingress $(INGRESS_NAME) -n $(NAMESPACE) -o jsonpath='{.metadata.annotations.kubernetes\.io/ingress\.global-static-ip-name}' 2>/dev/null); \
+		if [ -n "$$STATIC_IP_NAME" ]; then \
+			IP=$$(gcloud compute addresses describe "$$STATIC_IP_NAME" --global --project $(GCP_PROJECT) --format='value(address)' 2>/dev/null || true); \
+		fi; \
+	fi; \
+	if [ -z "$$IP" ]; then \
+		echo "FAIL: ingress IP unresolved"; \
+		exit 1; \
+	fi; \
+	CODE=$$(curl -sS -o /dev/null -w "%{http_code}" --max-time 15 "http://$$IP/" || true); \
+	if [ "$$CODE" = "200" ]; then \
+		echo "PASS: http://$$IP/ returned 200"; \
+	else \
+		echo "FAIL: http://$$IP/ returned $$CODE"; \
+		exit 1; \
+	fi
+
+k8s-health-ci: k8s-ingress-health-ci k8s-curl-ci
+	@echo "PASS: k8s health CI gate"
+
 k8s-curl-https:
-	@IP=$$(kubectl get ingress $(INGRESS_NAME) -n $(NAMESPACE) -o jsonpath='{.status.loadBalancer.ingress[0].ip}'); \
+	@IP=$$(kubectl get ingress $(INGRESS_NAME) -n $(NAMESPACE) -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null); \
+	if [ -z "$$IP" ]; then \
+		STATIC_IP_NAME=$$(kubectl get ingress $(INGRESS_NAME) -n $(NAMESPACE) -o jsonpath='{.metadata.annotations.kubernetes\.io/ingress\.global-static-ip-name}' 2>/dev/null); \
+		if [ -n "$$STATIC_IP_NAME" ]; then \
+			IP=$$(gcloud compute addresses describe "$$STATIC_IP_NAME" --global --project $(GCP_PROJECT) --format='value(address)' 2>/dev/null || true); \
+		fi; \
+	fi; \
 	if [ -z "$$IP" ]; then \
 		echo "❌ Ingress IP not ready yet"; \
 		exit 1; \
@@ -328,6 +378,12 @@ k8s-smoke:
 		echo "❌ Unable to query ingress (API connectivity issue)"; \
 		cat /tmp/k8s-smoke.err; \
 		exit 1; \
+	fi; \
+	if [ -z "$$IP" ]; then \
+		STATIC_IP_NAME=$$(kubectl get ingress $(INGRESS_NAME) -n $(NAMESPACE) --request-timeout=20s -o jsonpath='{.metadata.annotations.kubernetes\.io/ingress\.global-static-ip-name}' 2>/tmp/k8s-smoke.err); \
+		if [ $$? -eq 0 ] && [ -n "$$STATIC_IP_NAME" ]; then \
+			IP=$$(gcloud compute addresses describe "$$STATIC_IP_NAME" --global --project $(GCP_PROJECT) --format='value(address)' 2>/tmp/k8s-smoke.err || true); \
+		fi; \
 	fi; \
 	if [ -z "$$IP" ]; then \
 		echo "❌ Ingress IP not ready yet"; \
@@ -366,6 +422,12 @@ k8s-smoke-https:
 		echo "❌ Unable to query ingress (API connectivity issue)"; \
 		cat /tmp/k8s-smoke.err; \
 		exit 1; \
+	fi; \
+	if [ -z "$$IP" ]; then \
+		STATIC_IP_NAME=$$(kubectl get ingress $(INGRESS_NAME) -n $(NAMESPACE) --request-timeout=20s -o jsonpath='{.metadata.annotations.kubernetes\.io/ingress\.global-static-ip-name}' 2>/tmp/k8s-smoke.err); \
+		if [ $$? -eq 0 ] && [ -n "$$STATIC_IP_NAME" ]; then \
+			IP=$$(gcloud compute addresses describe "$$STATIC_IP_NAME" --global --project $(GCP_PROJECT) --format='value(address)' 2>/tmp/k8s-smoke.err || true); \
+		fi; \
 	fi; \
 	if [ -z "$$IP" ]; then \
 		echo "❌ Ingress IP not ready yet"; \
@@ -506,3 +568,57 @@ k8s-cdn-status:
 	echo "Backend: $$BACKEND"; \
 	gcloud compute backend-services describe "$$BACKEND" --global --project $(GCP_PROJECT) \
 		--format='yaml(name,enableCDN,cdnPolicy.cacheMode,timeoutSec,connectionDraining.drainingTimeoutSec,logConfig.enable)'
+
+k8s-ingress-health:
+	@echo "🩺 Ingress health summary"
+	@echo "========================"
+	@echo ""
+	@echo "--- Ingress ---"
+	@kubectl get ingress $(INGRESS_NAME) -n $(NAMESPACE) -o wide
+	@echo ""
+	@echo "--- Ingress external IP ---"
+	@IP=$$(kubectl get ingress $(INGRESS_NAME) -n $(NAMESPACE) -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null); \
+	if [ -z "$$IP" ]; then \
+		STATIC_IP_NAME=$$(kubectl get ingress $(INGRESS_NAME) -n $(NAMESPACE) -o jsonpath='{.metadata.annotations.kubernetes\.io/ingress\.global-static-ip-name}' 2>/dev/null); \
+		if [ -n "$$STATIC_IP_NAME" ]; then \
+			IP=$$(gcloud compute addresses describe "$$STATIC_IP_NAME" --global --project $(GCP_PROJECT) --format='value(address)' 2>/dev/null || true); \
+		fi; \
+	fi; \
+	if [ -z "$$IP" ]; then \
+		echo "Ingress IP not ready yet"; \
+	else \
+		echo "$$IP"; \
+	fi
+	@echo ""
+	@echo "--- Ingress backend annotation ---"
+	@kubectl get ingress $(INGRESS_NAME) -n $(NAMESPACE) -o jsonpath='{.metadata.annotations.ingress\.kubernetes\.io/backends}' 2>/dev/null && echo "" || echo "(no backend annotation yet)"
+	@echo ""
+	@echo "--- Backend service health (gcloud) ---"
+	@BACKEND=$$(kubectl -n $(NAMESPACE) describe ingress $(INGRESS_NAME) 2>/tmp/k8s-ingress-health.err | sed -n 's/.*"\(k8s[0-9]-[^"]*hello-world-service-80[^"]*\)":"[A-Z]*".*/\1/p' | head -n1); \
+	if [ -z "$$BACKEND" ]; then \
+		BACKEND=$$(gcloud compute backend-services list --global --project $(GCP_PROJECT) --filter='name~hello-world-ns-hello-world-service-80' --format='value(name)' | head -n1); \
+	fi; \
+	if [ -z "$$BACKEND" ]; then \
+		echo "❌ Could not resolve backend service name"; \
+		cat /tmp/k8s-ingress-health.err 2>/dev/null || true; \
+		exit 1; \
+	fi; \
+	echo "Backend: $$BACKEND"; \
+	gcloud compute backend-services get-health "$$BACKEND" --global --project $(GCP_PROJECT)
+
+k8s-ingress-health-ci:
+	@BACKEND=$$(kubectl -n $(NAMESPACE) describe ingress $(INGRESS_NAME) 2>/tmp/k8s-ingress-health-ci.err | sed -n 's/.*"\(k8s[0-9]-[^"]*hello-world-service-80[^"]*\)":"[A-Z]*".*/\1/p' | head -n1); \
+	if [ -z "$$BACKEND" ]; then \
+		BACKEND=$$(gcloud compute backend-services list --global --project $(GCP_PROJECT) --filter='name~hello-world-ns-hello-world-service-80' --format='value(name)' | head -n1); \
+	fi; \
+	if [ -z "$$BACKEND" ]; then \
+		echo "FAIL: ingress backend unresolved"; \
+		cat /tmp/k8s-ingress-health-ci.err 2>/dev/null || true; \
+		exit 1; \
+	fi; \
+	if gcloud compute backend-services get-health "$$BACKEND" --global --project $(GCP_PROJECT) --format='json' | grep -q '"healthState": "HEALTHY"'; then \
+		echo "PASS: ingress backend healthy ($$BACKEND)"; \
+	else \
+		echo "FAIL: ingress backend unhealthy ($$BACKEND)"; \
+		exit 1; \
+	fi
