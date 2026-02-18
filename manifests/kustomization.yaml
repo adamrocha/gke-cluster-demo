@@ -1,6 +1,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: hello-world-ns
+
 resources:
   - hello-world-ns.yaml
   - hello-world-deployment.yaml
@@ -8,24 +9,16 @@ resources:
   - hello-world-backend-config.yaml
   - hello-world-networkpolicy.yaml
   - hello-world-ingress.yaml
-# Optionally add common labels
-# Optionally add common annotations
-# Example: Override image without editing the deployment file directly
-# Uncomment and modify as needed:
-# images:
-#   - name: us-central1-docker.pkg.dev/gke-cluster-458701/hello-world-repo/hello-world:1.2.5
-#     newTag: 1.2.6
-#     # Or use newName to change registry:
-#     # newName: newregistry.io/hello-world-demo
-# Example: Add config map generator
-# configMapGenerator:
-#   - name: app-config
-#     literals:
-#       - APP_ENV=production
-#       - LOG_LEVEL=info
+
 commonAnnotations:
-  Test: Override replicas
-  managed-by: kustomize
+  app.kubernetes.io/managed-by: kustomize
+  app.kubernetes.io/part-of: gke-cluster-demo
+  docs: docs/kubernetes-deployment-guide.md
+
+images:
+  - name: us-central1-docker.pkg.dev/gke-cluster-458701/hello-world-repo/hello-world
+    newTag: 1.2.5
+
 replicas:
-  - count: 4
-    name: hello-world
+  - name: hello-world
+    count: 3

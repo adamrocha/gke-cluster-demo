@@ -23,6 +23,7 @@ IMAGE_TAG := 1.2.5
 	tf-bootstrap tf-format tf-init tf-validate tf-plan tf-apply tf-destroy tf-output tf-state \
 	tf-bucket create-bucket enable-versioning set-lifecycle add-labels delete-artifact-repo nuke-tf-bucket \
 	k8s-validate k8s-validate-server k8s-apply-ns k8s-apply k8s-delete k8s-status k8s-logs \
+	k8s-events k8s-create-image-pull-secret k8s-fix-image-pull-secret \
 	k8s-ingress-ip k8s-curl k8s-curl-https k8s-smoke k8s-smoke-https k8s-shell k8s-describe k8s-restart \
 	k8s-kustomize-validate k8s-kustomize-apply k8s-kustomize-diff k8s-kustomize-delete \
 	bg-deploy bg-status bg-switch-blue bg-switch-green bg-rollback bg-cleanup bg-test-blue bg-test-green bg-logs-blue bg-logs-green \
@@ -50,6 +51,9 @@ help:
 	@echo "  make k8s-apply           - Deploy all manifests"
 	@echo "  make k8s-status          - Check deployment status"
 	@echo "  make k8s-logs            - View application logs"
+	@echo "  make k8s-events          - Show recent namespace events"
+	@echo "  make k8s-create-image-pull-secret - Create/update Artifact Registry pull secret"
+	@echo "  make k8s-fix-image-pull-secret    - Refresh pull secret and restart deployment"
 	@echo "  make k8s-ingress-ip      - Print ingress external IP"
 	@echo "  make k8s-curl            - Curl ingress endpoint"
 	@echo "  make k8s-curl-https      - Curl ingress endpoint over HTTPS"
@@ -192,23 +196,13 @@ nuke-tf-bucket:
 
 # Kubernetes Manifest Deployment Targets
 k8s-validate:
-	@echo "🔍 Validating Kubernetes manifests..."
-	@echo "--- Validating namespace ---"
-	kubectl apply --dry-run=client -f manifests/hello-world-ns.yaml
-	@echo "--- Validating deployment ---"
-	kubectl apply --dry-run=client -f manifests/hello-world-deployment.yaml
-	@echo "--- Validating service ---"
-	kubectl apply --dry-run=client -f manifests/hello-world-service.yaml
+	@echo "🔍 Validating Kubernetes manifests (kustomize/client-side)..."
+	kubectl apply --dry-run=client -k manifests/
 	@echo "✅ All manifests are valid."
 
 k8s-validate-server:
-	@echo "🔍 Validating manifests against cluster (server-side)..."
-	@echo "--- Validating namespace ---"
-	kubectl apply --dry-run=server -f manifests/hello-world-ns.yaml
-	@echo "--- Validating deployment ---"
-	kubectl apply --dry-run=server -f manifests/hello-world-deployment.yaml
-	@echo "--- Validating service ---"
-	kubectl apply --dry-run=server -f manifests/hello-world-service.yaml
+	@echo "🔍 Validating manifests against cluster (kustomize/server-side)..."
+	kubectl apply --dry-run=server -k manifests/
 	@echo "✅ All manifests are valid against cluster."
 
 k8s-apply-ns:
@@ -216,10 +210,9 @@ k8s-apply-ns:
 	kubectl apply -f manifests/hello-world-ns.yaml
 	@echo "✅ Namespace created."
 
-k8s-apply: k8s-apply-ns
-	@echo "🚀 Deploying Kubernetes manifests..."
-	kubectl apply -f manifests/hello-world-deployment.yaml
-	kubectl apply -f manifests/hello-world-service.yaml
+k8s-apply:
+	@echo "🚀 Deploying Kubernetes manifests with kustomize..."
+	kubectl apply -k manifests/
 	@echo "✅ Kubernetes resources deployed."
 
 k8s-delete:
@@ -227,9 +220,7 @@ k8s-delete:
 	@read -p "Are you sure? (y/N): " confirm; \
 	if [ "$$confirm" = "y" ]; then \
 		echo "🗑️  Deleting Kubernetes resources..."; \
-		kubectl delete -f manifests/hello-world-service.yaml --ignore-not-found=true; \
-		kubectl delete -f manifests/hello-world-deployment.yaml --ignore-not-found=true; \
-		kubectl delete -f manifests/hello-world-ns.yaml --ignore-not-found=true; \
+		kubectl delete -k manifests/ --ignore-not-found=true; \
 		echo "✅ Kubernetes resources deleted."; \
 	else \
 		echo "❎ Aborted."; \
@@ -257,6 +248,34 @@ k8s-status:
 k8s-logs:
 	@echo "📜 Fetching logs from hello-world deployment..."
 	kubectl logs -n $(NAMESPACE) -l app=hello-world --tail=100
+
+k8s-events:
+	@echo "📅 Fetching recent events from $(NAMESPACE)..."
+	kubectl get events -n $(NAMESPACE) --sort-by=.lastTimestamp
+
+k8s-create-image-pull-secret:
+	@echo "🔐 Creating/updating Artifact Registry pull secret in $(NAMESPACE)..."
+	@kubectl create secret docker-registry artifact-registry-credentials -n $(NAMESPACE) \
+		--docker-server=us-central1-docker.pkg.dev \
+		--docker-username=oauth2accesstoken \
+		--docker-password="$$(gcloud auth print-access-token)" \
+		--docker-email=unused@example.com \
+		--dry-run=client -o yaml | kubectl apply -f -
+	@echo "✅ Image pull secret ready: artifact-registry-credentials"
+
+k8s-fix-image-pull-secret: k8s-create-image-pull-secret
+	@echo "🔄 Restarting deployment to apply updated image pull secret..."
+	kubectl rollout restart deployment/hello-world -n $(NAMESPACE)
+	kubectl rollout status deployment/hello-world -n $(NAMESPACE) --timeout=180s
+	@echo "⚠️  Warning events from the last 5 minutes:"
+	@RECENT_WARNINGS=$$(kubectl get events -n $(NAMESPACE) --field-selector type=Warning --sort-by=.lastTimestamp --no-headers 2>/dev/null | awk '($$1 ~ /^[0-9]+s$$/ || $$1 ~ /^[1-4]m$$/)'); \
+	if [ -n "$$RECENT_WARNINGS" ]; then \
+		echo "LAST SEEN   TYPE      REASON                            OBJECT                             MESSAGE"; \
+		echo "$$RECENT_WARNINGS"; \
+	else \
+		echo "✅ No warning events in the last 5 minutes."; \
+	fi
+	@echo "✅ Pull secret refreshed and deployment restarted."
 
 k8s-ingress-ip:
 	@echo "🌐 Ingress external IP:"
