@@ -15,7 +15,7 @@ Blue/Green deployment is a release strategy that reduces downtime and risk by ru
 
 ## Architecture
 
-```
+```plaintext
 ┌─────────────────────────────────────────────────────────────┐
 │                    LoadBalancer Service                      │
 │              (selector: version: blue/green)                 │
@@ -50,6 +50,7 @@ kubectl apply -k manifests/blue-green/
 ```
 
 This creates:
+
 - Namespace: `hello-world-ns`
 - Deployment: `hello-world-blue` (3 replicas)
 - Deployment: `hello-world-green` (3 replicas)

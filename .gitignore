@@ -19,3 +19,6 @@ crash.*.log
 
 # Trunk - A tool for managing multiple Git repositories.
 .trunk/
+
+# pycache
+__pycache__/
