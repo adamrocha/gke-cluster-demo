@@ -10,7 +10,7 @@ on:
   delete:
 
 permissions:
-  contents: write
+  contents: read
 
 env:
   GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
@@ -201,13 +201,17 @@ jobs:
       - name: Create Artifact Registry pull secret
         run: |
           kubectl apply -f manifests/hello-world-ns.yaml
+          ACCESS_TOKEN="$(gcloud auth print-access-token)"
+          # Mask the access token in logs and environment to prevent accidental exposure
+          echo "::add-mask::$ACCESS_TOKEN"
           kubectl create secret docker-registry artifact-registry-credentials \
             -n hello-world-ns \
             --docker-server=${{ env.GCP_REGION }}-docker.pkg.dev \
             --docker-username=oauth2accesstoken \
-            --docker-password="$(gcloud auth print-access-token)" \
+            --docker-password="$ACCESS_TOKEN" \
             --docker-email=unused@example.com \
             --dry-run=client -o yaml | kubectl apply -f -
+          unset ACCESS_TOKEN
 
       - name: Validate Kubernetes manifests (kustomize)
         run: |
@@ -220,9 +224,14 @@ jobs:
       - name: Wait for rollout
         run: |
           if ! kubectl rollout status deployment/hello-world -n hello-world-ns --timeout=300s; then
+            # If rollout fails, gather diagnostics before exiting with error
             echo "::error::Deployment failed"
-            kubectl get pods -n hello-world-ns -o wide
-            kubectl logs -n hello-world-ns -l app=hello-world --tail=30 --all-containers=true || true
+            echo "--- Pod status summary ---"
+            kubectl get pods -n hello-world-ns -l app=hello-world
+            echo "--- Deployment describe (recent conditions/events) ---"
+            kubectl describe deployment/hello-world -n hello-world-ns || true
+            echo "--- Recent warning events ---"
+            kubectl get events -n hello-world-ns --field-selector type=Warning --sort-by=.lastTimestamp | tail -n 20 || true
             
             if kubectl rollout history deployment/hello-world -n hello-world-ns &>/dev/null; then
               echo "Rolling back..."
@@ -242,13 +251,14 @@ jobs:
               exit 0
             fi
 
+            # If health check fails, attempt to identify if backend is unhealthy or just not ready yet
             BACKEND=$(kubectl -n "${{ env.NAMESPACE }}" describe ingress "${{ env.INGRESS_NAME }}" 2>/tmp/ingress-health.err | sed -n 's/.*"\(k8s[0-9]-[^"]*hello-world-service-80[^"]*\)":"[A-Z]*".*/\1/p' | head -n1)
             if [ -z "$BACKEND" ]; then
               BACKEND=$(gcloud compute backend-services list --global --project "${{ env.GCP_PROJECT_ID }}" --filter='name~hello-world-ns-hello-world-service-80' --format='value(name)' | head -n1)
             fi
             if [ -n "$BACKEND" ]; then
-              echo "🔎 Backend health JSON (${BACKEND}):"
-              gcloud compute backend-services get-health "$BACKEND" --global --project "${{ env.GCP_PROJECT_ID }}" --format=json || true
+              echo "🔎 Backend health states (${BACKEND}):"
+              gcloud compute backend-services get-health "$BACKEND" --global --project "${{ env.GCP_PROJECT_ID }}" --format='yaml(healthStatus.backend,healthStatus.healthState)' || true
             else
               echo "⚠️ Backend unresolved on attempt ${i}"
               cat /tmp/ingress-health.err 2>/dev/null || true

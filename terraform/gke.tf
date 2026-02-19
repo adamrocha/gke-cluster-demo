@@ -114,10 +114,11 @@ resource "google_container_node_pool" "node_pool_demo" {
     service_account = google_service_account.gke_service_account.email
     preemptible     = true
     machine_type    = var.enable_arm_nodes ? var.arm_machine_type : var.machine_type
-    image_type      = "COS_CONTAINERD"
-    disk_type       = "pd-standard"
-    disk_size_gb    = 50
-    oauth_scopes    = ["https://www.googleapis.com/auth/cloud-platform"]
+    # COS_CONTAINERD is the recommended image type for GKE and supports both ARM and x86 nodes. It provides better performance and security compared to COS or Ubuntu images.
+    image_type   = "COS_CONTAINERD"
+    disk_type    = "pd-standard"
+    disk_size_gb = 50
+    oauth_scopes = ["https://www.googleapis.com/auth/cloud-platform"]
 
     workload_metadata_config {
       mode = "GKE_METADATA"

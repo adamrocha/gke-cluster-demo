@@ -11,9 +11,8 @@ resource "google_kms_key_ring" "repo_key_ring" {
   }
 }
 
-# Ensure the KMS key exists for Artifact Registry
-# trunk-ignore(checkov/CKV_GCP_82)
 resource "google_kms_crypto_key" "repo_key" {
+  # checkov:skip=CKV_GCP_82: Short rotation period is intentional for this demo environment
   count           = var.enable_artifact_registry_cmek ? 1 : 0
   name            = "artifact-registry-key"
   key_ring        = google_kms_key_ring.repo_key_ring[0].id
