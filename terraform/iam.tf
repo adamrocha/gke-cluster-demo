@@ -39,7 +39,8 @@ data "google_project" "current" {
 
 # Grant Artifact Registry service account permission to use the KMS key
 resource "google_kms_crypto_key_iam_member" "artifact_registry_kms" {
-  crypto_key_id = google_kms_crypto_key.repo_key.id
+  count         = var.enable_artifact_registry_cmek ? 1 : 0
+  crypto_key_id = google_kms_crypto_key.repo_key[0].id
   role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
   member        = "serviceAccount:service-${data.google_project.current.number}@gcp-sa-artifactregistry.iam.gserviceaccount.com"
 }

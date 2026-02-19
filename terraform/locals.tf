@@ -30,7 +30,7 @@ resource "google_artifact_registry_repository" "repo" {
   location      = var.region
   repository_id = var.repo_name
   format        = "DOCKER"
-  kms_key_name  = google_kms_crypto_key.repo_key.id
+  kms_key_name  = var.enable_artifact_registry_cmek ? google_kms_crypto_key.repo_key[0].id : null
 
   lifecycle {
     prevent_destroy = false

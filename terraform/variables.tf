@@ -54,6 +54,12 @@ variable "arm_node_locations" {
   type        = list(string)
 }
 
+variable "enable_artifact_registry_cmek" {
+  description = "Enable CMEK for Artifact Registry. Requires Cloud KMS create/use permissions."
+  default     = false
+  type        = bool
+}
+
 variable "repo_name" {
   description = "ECR repository name"
   default     = "hello-world-repo"
