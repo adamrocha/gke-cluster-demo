@@ -1,6 +1,9 @@
 # trunk-ignore-all(checkov/CKV2_K8S_6)
+# Reason: Pod is covered by namespace NetworkPolicy in manifests/hello-world-networkpolicy.yaml; single-file scans lack graph context.
 # trunk-ignore-all(checkov/CKV_K8S_43)
+# Reason: Image tag is intentionally managed by CI release flow; digest pinning is deferred for this demo pipeline.
 # trunk-ignore-all(trivy/KSV-0125)
+# Reason: Image is pulled from private Google Artifact Registry domain (*.pkg.dev) for this project.
 apiVersion: apps/v1
 kind: Deployment
 metadata:

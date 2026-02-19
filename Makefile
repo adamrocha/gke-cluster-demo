@@ -333,13 +333,20 @@ k8s-curl-ci:
 		echo "FAIL: ingress IP unresolved"; \
 		exit 1; \
 	fi; \
-	CODE=$$(curl -sS -o /dev/null -w "%{http_code}" --max-time 15 "http://$$IP/" || true); \
-	if [ "$$CODE" = "200" ]; then \
-		echo "PASS: http://$$IP/ returned 200"; \
-	else \
-		echo "FAIL: http://$$IP/ returned $$CODE"; \
-		exit 1; \
-	fi
+	echo "🔎 HTTP check with retries: http://$$IP/"; \
+	LAST_CODE="000"; \
+	for i in 1 2 3 4 5 6; do \
+		CODE=$$(curl -sS -o /dev/null -w "%{http_code}" --http1.1 -H 'Connection: close' --max-time 15 "http://$$IP/" || true); \
+		LAST_CODE="$$CODE"; \
+		if [ "$$CODE" = "200" ]; then \
+			echo "PASS: http://$$IP/ returned 200 (attempt $$i/6)"; \
+			exit 0; \
+		fi; \
+		echo "⏳ Attempt $$i/6 returned '$$CODE'"; \
+		sleep 5; \
+	done; \
+	echo "FAIL: http://$$IP/ returned $$LAST_CODE after retries"; \
+	exit 1
 
 k8s-health-ci: k8s-ingress-health-ci k8s-curl-ci
 	@echo "PASS: k8s health CI gate"

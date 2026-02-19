@@ -11,9 +11,9 @@ resource "google_compute_project_metadata" "enable_oslogin" {
 # }
 
 resource "google_container_cluster" "gke_cluster_demo" {
-  # checkov:skip=CKV_GCP_65: Deferred
-  # checkov:skip=CKV_GCP_18: Enabled at the cluster level with private nodes
-  # checkov:skip=CKV_GCP_69: Enabled at the node pool level
+  # checkov:skip=CKV_GCP_65: Cost management is currently handled via project-level budget/alerting controls; cluster-specific setting is deferred for this demo.
+  # checkov:skip=CKV_GCP_18: Private nodes are enabled in private_cluster_config (enable_private_nodes=true), which is the intended control for this cluster design.
+  # checkov:skip=CKV_GCP_69: Legacy metadata endpoints are disabled in node_config.metadata (disable-legacy-endpoints=true) at node pool level.
   depends_on                  = [google_project_service.api_services]
   description                 = "Managed GKE cluster"
   name                        = var.cluster_name
@@ -31,6 +31,7 @@ resource "google_container_cluster" "gke_cluster_demo" {
   }
 
   master_authorized_networks_config {
+    # Reason: Public access is temporarily allowed for bootstrap/testing; tighten to operator CIDR before production use.
     # trunk-ignore(trivy/GCP-0053)
     cidr_blocks {
       # cidr_block   = "${data.external.local_ip.result.ip}/32"

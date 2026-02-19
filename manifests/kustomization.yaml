@@ -1,7 +1,6 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: hello-world-ns
-
 resources:
   - hello-world-ns.yaml
   - hello-world-deployment.yaml
@@ -9,16 +8,13 @@ resources:
   - hello-world-backend-config.yaml
   - hello-world-networkpolicy.yaml
   - hello-world-ingress.yaml
-
 commonAnnotations:
   app.kubernetes.io/managed-by: kustomize
   app.kubernetes.io/part-of: gke-cluster-demo
   docs: docs/kubernetes-deployment-guide.md
-
 images:
   - name: us-central1-docker.pkg.dev/gke-cluster-458701/hello-world-repo/hello-world
     newTag: 1.2.5
-
 replicas:
   - name: hello-world
     count: 3

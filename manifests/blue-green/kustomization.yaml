@@ -1,7 +1,6 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: hello-world-ns
-
 resources:
   - hello-world-ns.yaml
   - hello-world-deployment-blue.yaml
@@ -10,13 +9,11 @@ resources:
   - hello-world-backend-config.yaml
   - hello-world-networkpolicy.yaml
   - hello-world-ingress.yaml
-
 commonAnnotations:
   app.kubernetes.io/managed-by: kustomize
   app.kubernetes.io/part-of: gke-cluster-demo
   deployment-strategy: blue-green
   docs: docs/blue-green-deployment.md
-
 replicas:
   - name: hello-world-blue
     count: 3

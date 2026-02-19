@@ -258,7 +258,7 @@ jobs:
             fi
             if [ -n "$BACKEND" ]; then
               echo "🔎 Backend health states (${BACKEND}):"
-              gcloud compute backend-services get-health "$BACKEND" --global --project "${{ env.GCP_PROJECT_ID }}" --format='yaml(healthStatus.backend,healthStatus.healthState)' || true
+              gcloud compute backend-services get-health "$BACKEND" --global --project "${{ env.GCP_PROJECT_ID }}" --format='yaml(backend,status.healthStatus.healthState)' || true
             else
               echo "⚠️ Backend unresolved on attempt ${i}"
               cat /tmp/ingress-health.err 2>/dev/null || true
