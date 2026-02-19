@@ -24,13 +24,13 @@ resource "terraform_data" "update_kubeconfig" {
 # Ensure the Artifact Registry repository exists
 resource "google_artifact_registry_repository" "repo" {
   depends_on = [
-    # google_kms_crypto_key_iam_member.artifact_registry_kms
+    google_kms_crypto_key_iam_member.artifact_registry_kms
   ]
   description   = "Docker repository for GKE images"
   location      = var.region
   repository_id = var.repo_name
   format        = "DOCKER"
-  # kms_key_name  = google_kms_crypto_key.repo_key.id
+  kms_key_name  = google_kms_crypto_key.repo_key.id
 
   lifecycle {
     prevent_destroy = false
@@ -45,6 +45,7 @@ resource "terraform_data" "docker_buildx" {
     image_tag  = var.image_tag
     platforms  = join(",", var.platforms)
     dockerfile = filemd5("../app/Dockerfile")
+    repo_name  = google_artifact_registry_repository.repo.name
   }
 
   provisioner "local-exec" {

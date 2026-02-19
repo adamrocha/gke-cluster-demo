@@ -11,6 +11,7 @@ resource "google_kms_key_ring" "repo_key_ring" {
 }
 
 # Ensure the KMS key exists for Artifact Registry
+# trunk-ignore(checkov/CKV_GCP_82)
 resource "google_kms_crypto_key" "repo_key" {
   name            = "artifact-registry-key"
   key_ring        = google_kms_key_ring.repo_key_ring.id

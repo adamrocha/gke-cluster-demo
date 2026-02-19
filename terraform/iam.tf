@@ -24,9 +24,7 @@ resource "google_service_account" "gke_service_account" {
 
 resource "google_project_iam_member" "gke_sa_roles" {
   for_each = toset([
-    "roles/container.defaultNodeServiceAccount",
-    "roles/artifactregistry.admin",
-    "roles/storage.objectViewer",
+    "roles/artifactregistry.reader",
     "roles/logging.logWriter",
     "roles/monitoring.metricWriter"
   ])
@@ -35,9 +33,13 @@ resource "google_project_iam_member" "gke_sa_roles" {
   member  = "serviceAccount:${google_service_account.gke_service_account.email}"
 }
 
+data "google_project" "current" {
+  project_id = var.project_id
+}
+
 # Grant Artifact Registry service account permission to use the KMS key
-# resource "google_kms_crypto_key_iam_member" "artifact_registry_kms" {
-#   crypto_key_id = google_kms_crypto_key.repo_key.id
-#   role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
-#   member        = "serviceAccount:service-${var.project_id}@gcp-sa-artifactregistry.iam.gserviceaccount.com"
-# }
+resource "google_kms_crypto_key_iam_member" "artifact_registry_kms" {
+  crypto_key_id = google_kms_crypto_key.repo_key.id
+  role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
+  member        = "serviceAccount:service-${data.google_project.current.number}@gcp-sa-artifactregistry.iam.gserviceaccount.com"
+}

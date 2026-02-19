@@ -54,13 +54,6 @@ variable "arm_node_locations" {
   type        = list(string)
 }
 
-variable "image_type" {
-  description = "The image type for the GKE nodes."
-  # ARM and x86 nodes both support COS_CONTAINERD on GKE.
-  default = "COS_CONTAINERD"
-  type    = string
-}
-
 variable "repo_name" {
   description = "ECR repository name"
   default     = "hello-world-repo"

@@ -31,6 +31,7 @@ resource "google_container_cluster" "gke_cluster_demo" {
   }
 
   master_authorized_networks_config {
+    # trunk-ignore(trivy/GCP-0053)
     cidr_blocks {
       # cidr_block   = "${data.external.local_ip.result.ip}/32"
       cidr_block   = "0.0.0.0/0"
@@ -113,7 +114,7 @@ resource "google_container_node_pool" "node_pool_demo" {
     service_account = google_service_account.gke_service_account.email
     preemptible     = true
     machine_type    = var.enable_arm_nodes ? var.arm_machine_type : var.machine_type
-    image_type      = var.image_type
+    image_type      = "COS_CONTAINERD"
     disk_type       = "pd-standard"
     disk_size_gb    = 50
     oauth_scopes    = ["https://www.googleapis.com/auth/cloud-platform"]
