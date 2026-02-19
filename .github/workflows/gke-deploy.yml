@@ -17,6 +17,7 @@ env:
   GCP_REGION: ${{ vars.GCP_REGION }}
   GKE_CLUSTER_NAME: ${{ vars.GKE_CLUSTER_NAME }}
   NAMESPACE: hello-world-ns
+  INGRESS_NAME: hello-world-ingress
   IMAGE_NAME: hello-world
   REPO_NAME: hello-world-repo
   IMAGE_TAG: 1.2.5
@@ -240,6 +241,19 @@ jobs:
               echo "✅ Ingress health checks passed"
               exit 0
             fi
+
+            BACKEND=$(kubectl -n "${{ env.NAMESPACE }}" describe ingress "${{ env.INGRESS_NAME }}" 2>/tmp/ingress-health.err | sed -n 's/.*"\(k8s[0-9]-[^"]*hello-world-service-80[^"]*\)":"[A-Z]*".*/\1/p' | head -n1)
+            if [ -z "$BACKEND" ]; then
+              BACKEND=$(gcloud compute backend-services list --global --project "${{ env.GCP_PROJECT_ID }}" --filter='name~hello-world-ns-hello-world-service-80' --format='value(name)' | head -n1)
+            fi
+            if [ -n "$BACKEND" ]; then
+              echo "🔎 Backend health JSON (${BACKEND}):"
+              gcloud compute backend-services get-health "$BACKEND" --global --project "${{ env.GCP_PROJECT_ID }}" --format=json || true
+            else
+              echo "⚠️ Backend unresolved on attempt ${i}"
+              cat /tmp/ingress-health.err 2>/dev/null || true
+            fi
+
             if [ "$i" -lt "$ATTEMPTS" ]; then
               echo "⏳ Ingress not ready yet, retrying in ${SLEEP_SECONDS}s..."
               sleep "$SLEEP_SECONDS"

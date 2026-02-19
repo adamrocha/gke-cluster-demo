@@ -616,9 +616,14 @@ k8s-ingress-health-ci:
 		cat /tmp/k8s-ingress-health-ci.err 2>/dev/null || true; \
 		exit 1; \
 	fi; \
-	if gcloud compute backend-services get-health "$$BACKEND" --global --project $(GCP_PROJECT) --format='json' | grep -q '"healthState": "HEALTHY"'; then \
+	HEALTH_JSON=$$(gcloud compute backend-services get-health "$$BACKEND" --global --project $(GCP_PROJECT) --format='json'); \
+	if echo "$$HEALTH_JSON" | grep -Eq '"healthState"[[:space:]]*:[[:space:]]*"UNHEALTHY"'; then \
+		echo "FAIL: ingress backend explicitly unhealthy ($$BACKEND)"; \
+		exit 1; \
+	fi; \
+	if echo "$$HEALTH_JSON" | grep -Eq '"healthState"[[:space:]]*:[[:space:]]*"HEALTHY"'; then \
 		echo "PASS: ingress backend healthy ($$BACKEND)"; \
 	else \
-		echo "FAIL: ingress backend unhealthy ($$BACKEND)"; \
+		echo "FAIL: ingress backend not ready yet ($$BACKEND)"; \
 		exit 1; \
 	fi
