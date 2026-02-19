@@ -238,8 +238,20 @@ jobs:
 
       - name: Verify ingress health
         run: |
-          if ! make k8s-health-ci; then
-            echo "::error::Ingress health checks failed"
-            make k8s-ingress-health || true
-            exit 1
-          fi
+          ATTEMPTS=12
+          SLEEP_SECONDS=15
+          for i in $(seq 1 "$ATTEMPTS"); do
+            echo "Ingress health check attempt ${i}/${ATTEMPTS}..."
+            if make k8s-health-ci; then
+              echo "✅ Ingress health checks passed"
+              exit 0
+            fi
+            if [ "$i" -lt "$ATTEMPTS" ]; then
+              echo "⏳ Ingress not ready yet, retrying in ${SLEEP_SECONDS}s..."
+              sleep "$SLEEP_SECONDS"
+            fi
+          done
+
+          echo "::error::Ingress health checks failed after ${ATTEMPTS} attempts"
+          make k8s-ingress-health || true
+          exit 1
