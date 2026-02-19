@@ -134,7 +134,7 @@ Edit `manifests/blue-green/hello-world-deployment-green.yaml`:
 ```yaml
 containers:
   - name: hello-world
-    image: us-central1-docker.pkg.dev/gke-cluster-458701/hello-world-repo/hello-world:1.2.6
+    image: us-central1-docker.pkg.dev/"${GCP_PROJECT_ID}"/hello-world-repo/hello-world:1.2.6
     # ... rest of config
 ```
 
@@ -389,7 +389,7 @@ kubectl get endpoints hello-world-service -n hello-world-ns
 ```sh
 # Verify image exists
 gcloud artifacts docker images list \
-  us-central1-docker.pkg.dev/gke-cluster-458701/hello-world-repo
+  us-central1-docker.pkg.dev/"${GCP_PROJECT_ID}"/hello-world-repo
 ```
 
 ## References

@@ -4,7 +4,7 @@
 export GCP_PAGER :=
 SHELL := /bin/bash
 
-GCP_PROJECT := gke-cluster-458701
+GCP_PROJECT_ID := gke-cluster-458701
 LOCATION := us-central1
 CLUSTER_NAME := gke-cluster-demo
 NAMESPACE := hello-world-ns
@@ -96,12 +96,12 @@ help:
 	@echo ""
 
 check-gcp:
-	@echo "🔍 Checking GCP project: $(GCP_PROJECT)"
-	@if ! gcloud projects describe $(GCP_PROJECT) --format="value(projectId)" | grep -q $(GCP_PROJECT) >/dev/null 2>&1; then \
-		echo "⚠️ Project $(GCP_PROJECT) not found."; \
+	@echo "🔍 Checking GCP project: $(PROJECT_ID)"
+	@if ! gcloud projects describe $(PROJECT_ID) --format="value(projectId)" | grep -q $(PROJECT_ID) >/dev/null 2>&1; then \
+		echo "⚠️ Project $(PROJECT_ID) not found."; \
 		exit 1; \
 	else \
-		echo "✅ GCP project $(GCP_PROJECT) exists."; \
+		echo "✅ GCP project $(PROJECT_ID) exists."; \
 	fi
 
 install-tools:
@@ -152,12 +152,16 @@ tf-bucket: create-bucket enable-versioning set-lifecycle add-labels
 
 create-bucket:
 	@echo "🚀 Creating GCS bucket: gs://$(BUCKET_NAME)"
-	gcloud storage buckets create gs://$(BUCKET_NAME) \
-		--location=$(LOCATION) \
-		--default-storage-class=STANDARD \
-		--uniform-bucket-level-access \
-		--public-access-prevention \
-		--retention-period=60s
+	@if gcloud storage buckets describe gs://$(BUCKET_NAME) >/dev/null 2>&1; then \
+		echo "ℹ️  Bucket gs://$(BUCKET_NAME) already exists. Skipping creation."; \
+	else \
+		gcloud storage buckets create gs://$(BUCKET_NAME) \
+			--location=$(LOCATION) \
+			--default-storage-class=STANDARD \
+			--uniform-bucket-level-access \
+			--public-access-prevention \
+			--retention-period=60s; \
+	fi
 
 enable-versioning:
 	@echo "🔄 Enabling versioning..."
@@ -178,10 +182,10 @@ delete-artifact-repo:
 	@echo "⚠️  WARNING: This will permanently delete the Artifact Registry repository: $(REPO_NAME)"
 	@read -p "Are you sure? (y/N): " confirm; \
 	if [ "$$confirm" = "y" ]; then \
-		echo "🗑️  Deleting repository $(REPO_NAME) from $(REPO_LOCATION) in project $(GCP_PROJECT)..."; \
+		echo "🗑️  Deleting repository $(REPO_NAME) from $(REPO_LOCATION) in project $(PROJECT_ID)..."; \
 		gcloud artifacts repositories delete $(REPO_NAME) \
 			--location=$(REPO_LOCATION) \
-			--project=$(GCP_PROJECT) --quiet; \
+			--project=$(PROJECT_ID) --quiet; \
 	else \
 		echo "❌ Deletion cancelled."; \
 	fi
@@ -287,7 +291,7 @@ k8s-ingress-ip:
 	if [ -z "$$IP" ]; then \
 		STATIC_IP_NAME=$$(kubectl get ingress $(INGRESS_NAME) -n $(NAMESPACE) -o jsonpath='{.metadata.annotations.kubernetes\.io/ingress\.global-static-ip-name}' 2>/dev/null); \
 		if [ -n "$$STATIC_IP_NAME" ]; then \
-			IP=$$(gcloud compute addresses describe "$$STATIC_IP_NAME" --global --project $(GCP_PROJECT) --format='value(address)' 2>/dev/null || true); \
+			IP=$$(gcloud compute addresses describe "$$STATIC_IP_NAME" --global --project $(PROJECT_ID) --format='value(address)' 2>/dev/null || true); \
 		fi; \
 	fi; \
 	if [ -z "$$IP" ]; then \
@@ -301,7 +305,7 @@ k8s-curl:
 	if [ -z "$$IP" ]; then \
 		STATIC_IP_NAME=$$(kubectl get ingress $(INGRESS_NAME) -n $(NAMESPACE) -o jsonpath='{.metadata.annotations.kubernetes\.io/ingress\.global-static-ip-name}' 2>/dev/null); \
 		if [ -n "$$STATIC_IP_NAME" ]; then \
-			IP=$$(gcloud compute addresses describe "$$STATIC_IP_NAME" --global --project $(GCP_PROJECT) --format='value(address)' 2>/dev/null || true); \
+			IP=$$(gcloud compute addresses describe "$$STATIC_IP_NAME" --global --project $(PROJECT_ID) --format='value(address)' 2>/dev/null || true); \
 		fi; \
 	fi; \
 	if [ -z "$$IP" ]; then \
@@ -326,7 +330,7 @@ k8s-curl-ci:
 	if [ -z "$$IP" ]; then \
 		STATIC_IP_NAME=$$(kubectl get ingress $(INGRESS_NAME) -n $(NAMESPACE) -o jsonpath='{.metadata.annotations.kubernetes\.io/ingress\.global-static-ip-name}' 2>/dev/null); \
 		if [ -n "$$STATIC_IP_NAME" ]; then \
-			IP=$$(gcloud compute addresses describe "$$STATIC_IP_NAME" --global --project $(GCP_PROJECT) --format='value(address)' 2>/dev/null || true); \
+			IP=$$(gcloud compute addresses describe "$$STATIC_IP_NAME" --global --project $(PROJECT_ID) --format='value(address)' 2>/dev/null || true); \
 		fi; \
 	fi; \
 	if [ -z "$$IP" ]; then \
@@ -356,7 +360,7 @@ k8s-curl-https:
 	if [ -z "$$IP" ]; then \
 		STATIC_IP_NAME=$$(kubectl get ingress $(INGRESS_NAME) -n $(NAMESPACE) -o jsonpath='{.metadata.annotations.kubernetes\.io/ingress\.global-static-ip-name}' 2>/dev/null); \
 		if [ -n "$$STATIC_IP_NAME" ]; then \
-			IP=$$(gcloud compute addresses describe "$$STATIC_IP_NAME" --global --project $(GCP_PROJECT) --format='value(address)' 2>/dev/null || true); \
+			IP=$$(gcloud compute addresses describe "$$STATIC_IP_NAME" --global --project $(PROJECT_ID) --format='value(address)' 2>/dev/null || true); \
 		fi; \
 	fi; \
 	if [ -z "$$IP" ]; then \
@@ -389,7 +393,7 @@ k8s-smoke:
 	if [ -z "$$IP" ]; then \
 		STATIC_IP_NAME=$$(kubectl get ingress $(INGRESS_NAME) -n $(NAMESPACE) --request-timeout=20s -o jsonpath='{.metadata.annotations.kubernetes\.io/ingress\.global-static-ip-name}' 2>/tmp/k8s-smoke.err); \
 		if [ $$? -eq 0 ] && [ -n "$$STATIC_IP_NAME" ]; then \
-			IP=$$(gcloud compute addresses describe "$$STATIC_IP_NAME" --global --project $(GCP_PROJECT) --format='value(address)' 2>/tmp/k8s-smoke.err || true); \
+			IP=$$(gcloud compute addresses describe "$$STATIC_IP_NAME" --global --project $(PROJECT_ID) --format='value(address)' 2>/tmp/k8s-smoke.err || true); \
 		fi; \
 	fi; \
 	if [ -z "$$IP" ]; then \
@@ -433,7 +437,7 @@ k8s-smoke-https:
 	if [ -z "$$IP" ]; then \
 		STATIC_IP_NAME=$$(kubectl get ingress $(INGRESS_NAME) -n $(NAMESPACE) --request-timeout=20s -o jsonpath='{.metadata.annotations.kubernetes\.io/ingress\.global-static-ip-name}' 2>/tmp/k8s-smoke.err); \
 		if [ $$? -eq 0 ] && [ -n "$$STATIC_IP_NAME" ]; then \
-			IP=$$(gcloud compute addresses describe "$$STATIC_IP_NAME" --global --project $(GCP_PROJECT) --format='value(address)' 2>/tmp/k8s-smoke.err || true); \
+			IP=$$(gcloud compute addresses describe "$$STATIC_IP_NAME" --global --project $(PROJECT_ID) --format='value(address)' 2>/tmp/k8s-smoke.err || true); \
 		fi; \
 	fi; \
 	if [ -z "$$IP" ]; then \
@@ -542,12 +546,12 @@ bg-logs-green:
 # Utility Commands
 update-kubeconfig:
 	@echo "🔧 Updating kubeconfig for GKE cluster..."
-	gcloud container clusters get-credentials $(CLUSTER_NAME) --region=$(LOCATION) --project=$(GCP_PROJECT)
+	gcloud container clusters get-credentials $(CLUSTER_NAME) --region=$(LOCATION) --project=$(PROJECT_ID)
 	@echo "✅ Kubeconfig updated."
 
 image-verify-arch:
 	@echo "🔎 Verifying multi-arch image support..."
-	@IMAGE_REF="us-central1-docker.pkg.dev/$(GCP_PROJECT)/$(REPO_NAME)/$(IMAGE_NAME):$(IMAGE_TAG)"; \
+	@IMAGE_REF="us-central1-docker.pkg.dev/$(PROJECT_ID)/$(REPO_NAME)/$(IMAGE_NAME):$(IMAGE_TAG)"; \
 	if ! command -v docker >/dev/null 2>&1; then \
 		echo "❌ docker is required for this check"; \
 		exit 1; \
@@ -565,7 +569,7 @@ k8s-cdn-status:
 	@echo "📡 Checking Cloud CDN status on ingress backend..."
 	@BACKEND=$$(kubectl -n $(NAMESPACE) describe ingress $(INGRESS_NAME) 2>/tmp/k8s-cdn-status.err | sed -n 's/.*"\(k8s[0-9]-[^"]*hello-world-service-80[^"]*\)":"[A-Z]*".*/\1/p' | head -n1); \
 	if [ -z "$$BACKEND" ]; then \
-		BACKEND=$$(gcloud compute backend-services list --global --project $(GCP_PROJECT) --filter='name~hello-world-ns-hello-world-service-80' --format='value(name)' | head -n1); \
+		BACKEND=$$(gcloud compute backend-services list --global --project $(PROJECT_ID) --filter='name~hello-world-ns-hello-world-service-80' --format='value(name)' | head -n1); \
 	fi; \
 	if [ -z "$$BACKEND" ]; then \
 		echo "❌ Could not resolve ingress backend service name (ingress may still be provisioning)"; \
@@ -573,7 +577,7 @@ k8s-cdn-status:
 		exit 1; \
 	fi; \
 	echo "Backend: $$BACKEND"; \
-	gcloud compute backend-services describe "$$BACKEND" --global --project $(GCP_PROJECT) \
+	gcloud compute backend-services describe "$$BACKEND" --global --project $(PROJECT_ID) \
 		--format='yaml(name,enableCDN,cdnPolicy.cacheMode,timeoutSec,connectionDraining.drainingTimeoutSec,logConfig.enable)'
 
 k8s-ingress-health:
@@ -588,7 +592,7 @@ k8s-ingress-health:
 	if [ -z "$$IP" ]; then \
 		STATIC_IP_NAME=$$(kubectl get ingress $(INGRESS_NAME) -n $(NAMESPACE) -o jsonpath='{.metadata.annotations.kubernetes\.io/ingress\.global-static-ip-name}' 2>/dev/null); \
 		if [ -n "$$STATIC_IP_NAME" ]; then \
-			IP=$$(gcloud compute addresses describe "$$STATIC_IP_NAME" --global --project $(GCP_PROJECT) --format='value(address)' 2>/dev/null || true); \
+			IP=$$(gcloud compute addresses describe "$$STATIC_IP_NAME" --global --project $(PROJECT_ID) --format='value(address)' 2>/dev/null || true); \
 		fi; \
 	fi; \
 	if [ -z "$$IP" ]; then \
@@ -603,7 +607,7 @@ k8s-ingress-health:
 	@echo "--- Backend service health (gcloud) ---"
 	@BACKEND=$$(kubectl -n $(NAMESPACE) describe ingress $(INGRESS_NAME) 2>/tmp/k8s-ingress-health.err | sed -n 's/.*"\(k8s[0-9]-[^"]*hello-world-service-80[^"]*\)":"[A-Z]*".*/\1/p' | head -n1); \
 	if [ -z "$$BACKEND" ]; then \
-		BACKEND=$$(gcloud compute backend-services list --global --project $(GCP_PROJECT) --filter='name~hello-world-ns-hello-world-service-80' --format='value(name)' | head -n1); \
+		BACKEND=$$(gcloud compute backend-services list --global --project $(PROJECT_ID) --filter='name~hello-world-ns-hello-world-service-80' --format='value(name)' | head -n1); \
 	fi; \
 	if [ -z "$$BACKEND" ]; then \
 		echo "❌ Could not resolve backend service name"; \
@@ -611,19 +615,19 @@ k8s-ingress-health:
 		exit 1; \
 	fi; \
 	echo "Backend: $$BACKEND"; \
-	gcloud compute backend-services get-health "$$BACKEND" --global --project $(GCP_PROJECT)
+	gcloud compute backend-services get-health "$$BACKEND" --global --project $(PROJECT_ID)
 
 k8s-ingress-health-ci:
 	@BACKEND=$$(kubectl -n $(NAMESPACE) describe ingress $(INGRESS_NAME) 2>/tmp/k8s-ingress-health-ci.err | sed -n 's/.*"\(k8s[0-9]-[^"]*hello-world-service-80[^"]*\)":"[A-Z]*".*/\1/p' | head -n1); \
 	if [ -z "$$BACKEND" ]; then \
-		BACKEND=$$(gcloud compute backend-services list --global --project $(GCP_PROJECT) --filter='name~hello-world-ns-hello-world-service-80' --format='value(name)' | head -n1); \
+		BACKEND=$$(gcloud compute backend-services list --global --project $(PROJECT_ID) --filter='name~hello-world-ns-hello-world-service-80' --format='value(name)' | head -n1); \
 	fi; \
 	if [ -z "$$BACKEND" ]; then \
 		echo "FAIL: ingress backend unresolved"; \
 		cat /tmp/k8s-ingress-health-ci.err 2>/dev/null || true; \
 		exit 1; \
 	fi; \
-	HEALTH_JSON=$$(gcloud compute backend-services get-health "$$BACKEND" --global --project $(GCP_PROJECT) --format='json'); \
+	HEALTH_JSON=$$(gcloud compute backend-services get-health "$$BACKEND" --global --project $(PROJECT_ID) --format='json'); \
 	if echo "$$HEALTH_JSON" | grep -Eq '"healthState"[[:space:]]*:[[:space:]]*"UNHEALTHY"'; then \
 		echo "FAIL: ingress backend explicitly unhealthy ($$BACKEND)"; \
 		exit 1; \

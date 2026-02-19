@@ -14,7 +14,7 @@ This guide provides detailed instructions for deploying applications to the GKE 
 
 ## Configuration
 
-**Image:** `us-central1-docker.pkg.dev/gke-cluster-458701/hello-world-repo/hello-world:1.2.5`  
+**Image:** `us-central1-docker.pkg.dev/"${PROJECT_ID}"/hello-world-repo/hello-world:1.2.5`
 **Security:** Non-root (UID 10001), read-only root filesystem, dropped capabilities, no privilege escalation  
 **Ports:** HTTP 8080→80  
 **Resources:** CPU 100m-250m, Memory 64Mi-128Mi  
@@ -189,7 +189,7 @@ kubectl get service hello-world-service -n hello-world-ns -o yaml
 
 ```sh
 # Verify image exists
-gcloud artifacts docker images list us-central1-docker.pkg.dev/gke-cluster-458701/hello-world-repo
+gcloud artifacts docker images list us-central1-docker.pkg.dev/"${PROJECT_ID}"/hello-world-repo
 
 # Check node service account permissions
 kubectl describe node | grep serviceAccount

@@ -4,13 +4,13 @@
 set -euo pipefail
 
 REPO_NAME="${1:-hello-world-repo}"
-IMAGE_TAG="${2:-latest}"
+IMAGE_TAG="${2:-1.2.5}" # Default to 1.2.5 if not provided
 VARIANT="${3-}" # Optional: "blue", "green", or empty for regular deployment
 
-PROJECT_ID="${GCP_PROJECT:-gke-cluster-458701}"
-REGION="${LOCATION:-us-central1}"
+GCP_PROJECT_ID="${GCP_PROJECT_ID:-gke-cluster-458701}"
+REGION="${REGION:-us-central1}"
 
-IMAGE_PATH="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/hello-world:${IMAGE_TAG}"
+IMAGE_PATH="${REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${REPO_NAME}/hello-world:${IMAGE_TAG}"
 
 if [[ -n ${VARIANT} ]] && [[ ${VARIANT} == "blue" || ${VARIANT} == "green" ]]; then
 	MANIFEST_FILE="manifests/blue-green/hello-world-deployment-${VARIANT}.yaml"
