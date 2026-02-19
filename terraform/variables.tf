@@ -60,6 +60,12 @@ variable "enable_artifact_registry_cmek" {
   type        = bool
 }
 
+variable "enable_artifact_registry_immutable_tags" {
+  description = "Prevent modifying or overwriting existing image tags in Artifact Registry."
+  default     = true
+  type        = bool
+}
+
 variable "repo_name" {
   description = "ECR repository name"
   default     = "hello-world-repo"

@@ -270,7 +270,7 @@ check_condition:
 
 1. **Semantic Versioning**: Update IMAGE_TAG in workflow env (e.g., 1.2.5)
 2. **SHA Tags**: Consider using git SHA for traceability
-3. **Latest Tag**: Automatically applied alongside version tag
+3. **Immutable Tags**: Use version tags only; workflow skips build/push when that tag already exists
 
 ### Terraform State
 

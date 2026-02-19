@@ -426,6 +426,7 @@ See **[docs/github-actions-workflow-guide.md](docs/github-actions-workflow-guide
 - **KMS encryption** - For GKE secrets and Cloud Storage
 - **VPC-scoped security** - Network isolation
 - **Image scanning** - Automated vulnerability scanning in GAR
+- **Immutable image tags** - Prevents tag overwrite; CI skips build/push when the configured tag already exists
 - **Drop capabilities** - Remove unnecessary Linux capabilities
 
 ## Monitoring and Logging (Optional)

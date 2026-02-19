@@ -9,6 +9,10 @@ resource "google_artifact_registry_repository" "repo" {
   format        = "DOCKER"
   kms_key_name  = var.enable_artifact_registry_cmek ? google_kms_crypto_key.repo_key[0].id : null
 
+  docker_config {
+    immutable_tags = var.enable_artifact_registry_immutable_tags
+  }
+
   lifecycle {
     prevent_destroy = false
   }
@@ -31,20 +35,28 @@ resource "terraform_data" "docker_buildx" {
     command     = <<-EOT
       set -e
       echo "🔨 Building multi-architecture image..."
-      
+
+      IMAGE_PATH="${var.region}-docker.pkg.dev/${var.project_id}/${var.repo_name}/${var.image_name}:${var.image_tag}"
+
+      # Skip build/push if immutable tag already exists
+      if gcloud artifacts docker images describe "$${IMAGE_PATH}" --project "${var.project_id}" >/dev/null 2>&1; then
+        echo "ℹ️  Image $${IMAGE_PATH} already exists. Skipping build and push."
+        exit 0
+      fi
+
       # Login to GAR
       gcloud auth configure-docker "${var.region}-docker.pkg.dev" --quiet
-      
+
       # Create buildx builder if not exists
       docker buildx create --use --name multiarch-builder 2>/dev/null || docker buildx use multiarch-builder
-      
+
       # Build and push multi-arch image
       docker buildx build \
         --platform ${join(",", var.platforms)} \
-        --tag "${var.region}-docker.pkg.dev/${var.project_id}/${var.repo_name}/${var.image_name}:${var.image_tag}" \
+        --tag "$${IMAGE_PATH}" \
         --push \
         ../app/
-      
+
       echo "✅ Multi-arch image pushed successfully"
     EOT
     interpreter = ["bash", "-c"]
