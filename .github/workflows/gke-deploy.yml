@@ -164,9 +164,7 @@ jobs:
 
       - name: Delete Kubernetes resources
         run: |
-          kubectl delete -f manifests/hello-world-service.yaml --ignore-not-found=true || true
-          kubectl delete -f manifests/hello-world-deployment.yaml --ignore-not-found=true || true
-          kubectl delete -f manifests/hello-world-ns.yaml --ignore-not-found=true || true
+          kubectl delete -k manifests/ --ignore-not-found=true || true
           echo "Waiting for resources to be deleted..."
           sleep 30
 
@@ -210,17 +208,13 @@ jobs:
             --docker-email=unused@example.com \
             --dry-run=client -o yaml | kubectl apply -f -
 
-      - name: Apply Kubernetes manifests
+      - name: Validate Kubernetes manifests (kustomize)
         run: |
-          kubectl apply -f manifests/hello-world-ns.yaml
-          kubectl apply -f manifests/hello-world-deployment.yaml
-          kubectl apply -f manifests/hello-world-service.yaml
+          kubectl apply --dry-run=client -k manifests/
 
-      - name: Update deployment image
+      - name: Apply Kubernetes manifests (kustomize)
         run: |
-          kubectl set image deployment/hello-world \
-            -n hello-world-ns \
-            hello-world=${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          kubectl apply -k manifests/
 
       - name: Wait for rollout
         run: |
