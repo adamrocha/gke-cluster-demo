@@ -5,6 +5,7 @@ resource "google_project_service" "api_services" {
     "cloudresourcemanager.googleapis.com",
     "artifactregistry.googleapis.com",
     "ondemandscanning.googleapis.com",
+    "logging.googleapis.com",
     # "containerscanning.googleapis.com",
     "cloudkms.googleapis.com"
   ])
