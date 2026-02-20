@@ -181,9 +181,10 @@ jobs:
 
       - name: Delete Kubernetes resources
         run: |
-          kubectl delete -k manifests/ --ignore-not-found=true
+          kubectl delete -k manifests/ --timeout=300s --ignore-not-found=true
           echo "Waiting for resources to be deleted..."
-          kubectl wait --for=delete namespace/hello-world-ns --timeout=300s --ignore-not-found=true
+          kubectl wait --for=delete namespace/hello-world-ns --timeout=300s
+          echo "Kubernetes resources deleted."
 
       - name: Terraform Destroy
         run: terraform -chdir=terraform destroy -auto-approve

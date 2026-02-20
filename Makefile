@@ -228,9 +228,9 @@ k8s-delete:
 	@read -p "Are you sure? (y/N): " confirm; \
 	if [ "$$confirm" = "y" ]; then \
 		echo "🗑️  Deleting Kubernetes resources..."; \
-		kubectl delete -k manifests/ --ignore-not-found=true; \
+		kubectl delete -k manifests/ --timeout=300s --ignore-not-found=true; \
 		echo "⏳ Waiting for resources to be deleted..."; \
-		kubectl wait --for=delete namespace/"$(NAMESPACE)" --timeout=300s --ignore-not-found=true; \
+		kubectl wait --for=delete namespace/"$(NAMESPACE)" --timeout=300s; \
 		echo "✅ Kubernetes resources deleted."; \
 	else \
 		echo "❎ Aborted."; \
