@@ -54,11 +54,16 @@ variable "arm_node_locations" {
   type        = list(string)
 }
 
-variable "image_type" {
-  description = "The image type for the GKE nodes."
-  # ARM and x86 nodes both support COS_CONTAINERD on GKE.
-  default = "COS_CONTAINERD"
-  type    = string
+variable "enable_artifact_registry_cmek" {
+  description = "Enable CMEK for Artifact Registry. Requires Cloud KMS create/use permissions."
+  default     = false
+  type        = bool
+}
+
+variable "enable_artifact_registry_immutable_tags" {
+  description = "Prevent modifying or overwriting existing image tags in Artifact Registry."
+  default     = true
+  type        = bool
 }
 
 variable "repo_name" {

@@ -39,14 +39,14 @@ git clone https://github.com/your-org/gke-cluster-demo.git
 cd gke-cluster-demo
 ```
 
-2. **Configure GCP credentials:**
+1. **Configure GCP credentials:**
 
 ```sh
 gcloud auth login
-gcloud config set project gke-cluster-458701
+gcloud config set project "${PROJECT_ID}"
 ```
 
-3. **Create the GKE cluster and deploy manifests:**
+1. **Create the GKE cluster and deploy manifests:**
 
 ```sh
 make install-tools
@@ -54,7 +54,7 @@ make tf-bootstrap
 make tf-apply
 ```
 
-4. **Access the cluster:**
+1. **Access the cluster:**
 
 ```sh
 make update-kubeconfig
@@ -63,7 +63,7 @@ kubectl get nodes
 
 ### Option 2: Hybrid Approach (Terraform for Infrastructure, Manifests for Apps)
 
-**Recommended for production use**
+## Recommended for production use
 
 1. **Clone the repository:**
 
@@ -72,14 +72,14 @@ git clone https://github.com/your-org/gke-cluster-demo.git
 cd gke-cluster-demo
 ```
 
-2. **Configure GCP credentials:**
+1. **Configure GCP credentials:**
 
 ```sh
 gcloud auth login
-gcloud config set project gke-cluster-458701
+gcloud config set project "${PROJECT_ID}"
 ```
 
-3. **Provision GKE cluster with Terraform:**
+1. **Provision GKE cluster with Terraform:**
 
 ```sh
 make install-tools
@@ -87,13 +87,13 @@ make tf-bootstrap
 make tf-apply
 ```
 
-4. **Update kubeconfig:**
+1. **Update kubeconfig:**
 
 ```sh
 make update-kubeconfig
 ```
 
-5. **Deploy application using manifests:**
+1. **Deploy application using manifests:**
 
 ```sh
 # Validate manifests
@@ -106,7 +106,7 @@ make k8s-apply
 make k8s-status
 ```
 
-6. **Access the application:**
+1. **Access the application:**
 
 ```sh
 kubectl get service hello-world-service -n hello-world-ns
@@ -347,6 +347,7 @@ git push origin --delete delete/testing
 ```
 
 This will:
+
 1. Delete Kubernetes resources
 2. Destroy Terraform infrastructure
 3. Require manual approval via `destroy-approval` environment
@@ -355,18 +356,18 @@ This will:
 
 Configure in **Settings → Secrets and variables → Actions**:
 
-| Secret | Description |
-|--------|-------------|
+| Secret       | Description                      |
+| ------------ | -------------------------------- |
 | `GCP_SA_KEY` | JSON key for GCP service account |
 
 ### Required GitHub Variables
 
 Configure in **Settings → Secrets and variables → Actions → Variables**:
 
-| Variable | Example | Description |
-|----------|---------|-------------|
-| `GCP_PROJECT_ID` | `gke-cluster-458701` | Your GCP project ID |
-| `GCP_REGION` | `us-central1` | GCP region for resources |
+| Variable           | Example            | Description              |
+| ------------------ | ------------------ | ------------------------ |
+| `GCP_PROJECT_ID`   | `"${PROJECT_ID}"`  | Your GCP project ID      |
+| `GCP_REGION`       | `us-central1`      | GCP region for resources |
 | `GKE_CLUSTER_NAME` | `gke-cluster-demo` | Name of your GKE cluster |
 
 ### Deployment Pattern
@@ -379,7 +380,7 @@ kubectl apply -f manifests/hello-world-ns.yaml
 kubectl apply -f manifests/hello-world-deployment.yaml
 kubectl apply -f manifests/hello-world-service.yaml
 
-# Update deployment image  
+# Update deployment image
 kubectl set image deployment/hello-world \
   -n hello-world-ns \
   hello-world=us-central1-docker.pkg.dev/PROJECT/REPO/IMAGE:TAG
@@ -401,6 +402,7 @@ concurrency:
 ### For Complete Details
 
 See **[docs/github-actions-workflow-guide.md](docs/github-actions-workflow-guide.md)** for:
+
 - Detailed job descriptions
 - Deployment flow diagrams
 - Destroy workflow logic
@@ -424,6 +426,7 @@ See **[docs/github-actions-workflow-guide.md](docs/github-actions-workflow-guide
 - **KMS encryption** - For GKE secrets and Cloud Storage
 - **VPC-scoped security** - Network isolation
 - **Image scanning** - Automated vulnerability scanning in GAR
+- **Immutable image tags** - Prevents tag overwrite; CI skips build/push when the configured tag already exists
 - **Drop capabilities** - Remove unnecessary Linux capabilities
 
 ## Monitoring and Logging (Optional)
@@ -439,7 +442,7 @@ See **[docs/github-actions-workflow-guide.md](docs/github-actions-workflow-guide
 
 ```sh
 gcloud artifacts docker images list \
-  us-central1-docker.pkg.dev/gke-cluster-458701/hello-world-repo
+  us-central1-docker.pkg.dev/"${PROJECT_ID}"/hello-world-repo
 ```
 
 **Check node permissions:**

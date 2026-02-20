@@ -10,13 +10,14 @@ on:
   delete:
 
 permissions:
-  contents: write
+  contents: read
 
 env:
   GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
   GCP_REGION: ${{ vars.GCP_REGION }}
   GKE_CLUSTER_NAME: ${{ vars.GKE_CLUSTER_NAME }}
   NAMESPACE: hello-world-ns
+  INGRESS_NAME: hello-world-ingress
   IMAGE_NAME: hello-world
   REPO_NAME: hello-world-repo
   IMAGE_TAG: 1.2.5
@@ -24,8 +25,57 @@ env:
   PYTHON_VERSION: "3.11"
 
 jobs:
-  # Deploy infrastructure and Docker image
-  terraform-apply:
+  # Build and push Docker image
+  build-and-push-image:
+    if: github.event_name != 'delete'
+    name: Build and Push Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
+
+      - name: Check if image exists
+        id: image-check
+        run: |
+          IMAGE_PATH="${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}"
+          if gcloud artifacts docker images describe "${IMAGE_PATH}:${{ env.IMAGE_TAG }}" 2>/dev/null; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "✅ Image already exists: ${IMAGE_PATH}:${{ env.IMAGE_TAG }}"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "🔨 Image will be built: ${IMAGE_PATH}:${{ env.IMAGE_TAG }}"
+          fi
+
+      - name: Set up Docker Buildx
+        if: steps.image-check.outputs.exists == 'false'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Docker image
+        if: steps.image-check.outputs.exists == 'false'
+        uses: docker/build-push-action@v5
+        with:
+          context: ./app
+          file: ./app/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # Deploy infrastructure
+  provision-infrastructure:
     if: github.event_name != 'delete'
     name: Provision Infrastructure
     runs-on: ubuntu-latest
@@ -70,39 +120,6 @@ jobs:
 
       - name: Terraform Apply
         run: terraform -chdir=terraform apply -auto-approve tfplan
-
-      - name: Configure Docker for Artifact Registry
-        run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
-
-      - name: Check if image exists
-        id: image-check
-        run: |
-          IMAGE_PATH="${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}"
-          if gcloud artifacts docker images describe "${IMAGE_PATH}:${{ env.IMAGE_TAG }}" 2>/dev/null; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-            echo "✅ Image already exists: ${IMAGE_PATH}:${{ env.IMAGE_TAG }}"
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-            echo "🔨 Image will be built: ${IMAGE_PATH}:${{ env.IMAGE_TAG }}"
-          fi
-
-      - name: Set up Docker Buildx
-        if: steps.image-check.outputs.exists == 'false'
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and push Docker image
-        if: steps.image-check.outputs.exists == 'false'
-        uses: docker/build-push-action@v5
-        with:
-          context: ./app
-          file: ./app/Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: |
-            ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
-            ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
   # Check if branch deletion should trigger destroy
   check_condition:
@@ -164,11 +181,10 @@ jobs:
 
       - name: Delete Kubernetes resources
         run: |
-          kubectl delete -f manifests/hello-world-service.yaml --ignore-not-found=true || true
-          kubectl delete -f manifests/hello-world-deployment.yaml --ignore-not-found=true || true
-          kubectl delete -f manifests/hello-world-ns.yaml --ignore-not-found=true || true
+          kubectl delete -k manifests/ --timeout=300s --ignore-not-found=true
           echo "Waiting for resources to be deleted..."
-          sleep 30
+          kubectl wait --for=delete namespace/hello-world-ns --timeout=300s
+          echo "Kubernetes resources deleted."
 
       - name: Terraform Destroy
         run: terraform -chdir=terraform destroy -auto-approve
@@ -178,7 +194,7 @@ jobs:
     if: github.event_name != 'delete'
     name: Update Deployment
     runs-on: ubuntu-latest
-    needs: terraform-apply
+    needs: [provision-infrastructure, build-and-push-image]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -199,24 +215,40 @@ jobs:
       - name: Update kubeconfig
         run: gcloud container clusters get-credentials ${{ env.GKE_CLUSTER_NAME }} --region ${{ env.GCP_REGION }} --project ${{ env.GCP_PROJECT_ID }}
 
-      - name: Apply Kubernetes manifests
+      - name: Create Artifact Registry pull secret
         run: |
           kubectl apply -f manifests/hello-world-ns.yaml
-          kubectl apply -f manifests/hello-world-deployment.yaml
-          kubectl apply -f manifests/hello-world-service.yaml
-
-      - name: Update deployment image
-        run: |
-          kubectl set image deployment/hello-world \
+          ACCESS_TOKEN="$(gcloud auth print-access-token)"
+          # Mask the access token in logs and environment to prevent accidental exposure
+          echo "::add-mask::$ACCESS_TOKEN"
+          kubectl create secret docker-registry artifact-registry-credentials \
             -n hello-world-ns \
-            hello-world=${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+            --docker-server=${{ env.GCP_REGION }}-docker.pkg.dev \
+            --docker-username=oauth2accesstoken \
+            --docker-password="$ACCESS_TOKEN" \
+            --docker-email=unused@example.com \
+            --dry-run=client -o yaml | kubectl apply -f -
+          unset ACCESS_TOKEN
+
+      - name: Validate Kubernetes manifests (kustomize)
+        run: |
+          kubectl apply --dry-run=client -k manifests/
+
+      - name: Apply Kubernetes manifests (kustomize)
+        run: |
+          kubectl apply -k manifests/
 
       - name: Wait for rollout
         run: |
           if ! kubectl rollout status deployment/hello-world -n hello-world-ns --timeout=300s; then
+            # If rollout fails, gather diagnostics before exiting with error
             echo "::error::Deployment failed"
-            kubectl get pods -n hello-world-ns -o wide
-            kubectl logs -n hello-world-ns -l app=hello-world --tail=30 --all-containers=true || true
+            echo "--- Pod status summary ---"
+            kubectl get pods -n hello-world-ns -l app=hello-world
+            echo "--- Deployment describe (recent conditions/events) ---"
+            kubectl describe deployment/hello-world -n hello-world-ns || true
+            echo "--- Recent warning events ---"
+            kubectl get events -n hello-world-ns --field-selector type=Warning --sort-by=.lastTimestamp | tail -n 20 || true
             
             if kubectl rollout history deployment/hello-world -n hello-world-ns &>/dev/null; then
               echo "Rolling back..."
@@ -224,3 +256,37 @@ jobs:
             fi
             exit 1
           fi
+
+      - name: Verify ingress health
+        run: |
+          ATTEMPTS=20
+          SLEEP_SECONDS=15
+          for i in $(seq 1 "$ATTEMPTS"); do
+            echo "Ingress health check attempt ${i}/${ATTEMPTS}..."
+            if make k8s-health-ci; then
+              echo "✅ Ingress health checks passed"
+              exit 0
+            fi
+
+            # If health check fails, attempt to identify if backend is unhealthy or just not ready yet
+            BACKEND=$(kubectl -n "${{ env.NAMESPACE }}" describe ingress "${{ env.INGRESS_NAME }}" 2>/tmp/ingress-health.err | sed -n 's/.*"\(k8s[0-9]-[^"]*hello-world-service-80[^"]*\)":"[A-Z]*".*/\1/p' | head -n1)
+            if [ -z "$BACKEND" ]; then
+              BACKEND=$(gcloud compute backend-services list --global --project "${{ env.GCP_PROJECT_ID }}" --filter='name~hello-world-ns-hello-world-service-80' --format='value(name)' | head -n1)
+            fi
+            if [ -n "$BACKEND" ]; then
+              echo "🔎 Backend health states (${BACKEND}):"
+              gcloud compute backend-services get-health "$BACKEND" --global --project "${{ env.GCP_PROJECT_ID }}" --format='yaml(backend,status.healthStatus.healthState)' || true
+            else
+              echo "⚠️ Backend unresolved on attempt ${i}"
+              cat /tmp/ingress-health.err 2>/dev/null || true
+            fi
+
+            if [ "$i" -lt "$ATTEMPTS" ]; then
+              echo "⏳ Ingress not ready yet, retrying in ${SLEEP_SECONDS}s..."
+              sleep "$SLEEP_SECONDS"
+            fi
+          done
+
+          echo "::error::Ingress health checks failed after ${ATTEMPTS} attempts"
+          make k8s-ingress-health || true
+          exit 1

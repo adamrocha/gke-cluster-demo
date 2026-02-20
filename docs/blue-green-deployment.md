@@ -36,6 +36,8 @@ Blue/Green deployment is a release strategy that reduces downtime and risk by ru
 - kubectl configured
 - Docker images in Google Artifact Registry
 - Namespace created (`hello-world-ns`)
+- Ingress certificate available as a GCE pre-shared certificate (`ingress.gcp.kubernetes.io/pre-shared-cert`)
+- No Kubernetes TLS Secret manifest is required for this repository's ingress setup
 
 ## Quick Start
 
@@ -134,7 +136,7 @@ Edit `manifests/blue-green/hello-world-deployment-green.yaml`:
 ```yaml
 containers:
   - name: hello-world
-    image: us-central1-docker.pkg.dev/gke-cluster-458701/hello-world-repo/hello-world:1.2.6
+    image: us-central1-docker.pkg.dev/"${GCP_PROJECT_ID}"/hello-world-repo/hello-world:1.2.6
     # ... rest of config
 ```
 
@@ -389,7 +391,7 @@ kubectl get endpoints hello-world-service -n hello-world-ns
 ```sh
 # Verify image exists
 gcloud artifacts docker images list \
-  us-central1-docker.pkg.dev/gke-cluster-458701/hello-world-repo
+  us-central1-docker.pkg.dev/"${GCP_PROJECT_ID}"/hello-world-repo
 ```
 
 ## References

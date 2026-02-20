@@ -149,7 +149,7 @@ kubectl describe svc hello-world-service -n hello-world-ns
 
 ```sh
 gcloud artifacts docker images list \
-  us-central1-docker.pkg.dev/gke-cluster-458701/hello-world-repo
+  us-central1-docker.pkg.dev/"${PROJECT_ID}"/hello-world-repo
 ```
 
 ## Resource Cleanup

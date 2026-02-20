@@ -4,6 +4,14 @@ metadata:
   name: hello-world-backend-config
   namespace: hello-world-ns
 spec:
+  healthCheck:
+    type: HTTP
+    requestPath: /
+    port: 8080
+    checkIntervalSec: 15
+    timeoutSec: 5
+    healthyThreshold: 1
+    unhealthyThreshold: 2
   cdn:
     enabled: true
     cachePolicy:

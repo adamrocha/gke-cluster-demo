@@ -113,6 +113,21 @@ resource "google_compute_firewall" "allow_iap_ssh" {
   priority      = 1000
 }
 
+resource "google_compute_firewall" "allow_gclb_health_checks" {
+  name        = "allow-gclb-health-checks"
+  description = "Allow Google Cloud Load Balancer health checks to app ports"
+  network     = google_compute_network.gke_vpc.name
+
+  allow {
+    protocol = "tcp"
+    ports    = ["80", "443", "8080", "8443"]
+  }
+
+  source_ranges = ["35.191.0.0/16", "130.211.0.0/22"]
+  direction     = "INGRESS"
+  priority      = 1000
+}
+
 resource "google_compute_router" "nat_router" {
   name        = "nat-router"
   description = "NAT Router"

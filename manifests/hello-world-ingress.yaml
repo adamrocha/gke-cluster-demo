@@ -4,7 +4,7 @@ metadata:
   name: hello-world-ingress
   namespace: hello-world-ns
   annotations:
-    # Use GCE ingress controller (creates External HTTP(S) Load Balancer)
+    # Compatibility with clusters/controllers that still require legacy class annotation
     kubernetes.io/ingress.class: gce
     # Attach Cloud Armor security policy for DDoS and WAF protection
     cloud.google.com/armor-config: '{"cloud-armor-policy": "cloud-armor-policy"}'
@@ -17,6 +17,8 @@ metadata:
   labels:
     app: hello-world
 spec:
+  # Use GCE ingress controller (creates External HTTP(S) Load Balancer)
+  ingressClassName: gce
   rules:
     - http:
         paths:

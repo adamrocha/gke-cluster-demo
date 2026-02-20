@@ -26,7 +26,7 @@ Pods (Container-Optimized OS nodes)
 
 - **Type**: Global Load Balancer
 - **Static IP**: Pre-provisioned via `google_compute_global_address.gke_lb_ip`
-- **SSL/TLS**: Managed certificates via `ManagedCertificate` resource
+- **SSL/TLS**: GCE SSL certificate referenced by Ingress `ingress.gcp.kubernetes.io/pre-shared-cert`
 - **Creation**: Automatically provisioned by GKE Ingress controller
 
 ### 2. Cloud Armor Security Policy
@@ -212,11 +212,12 @@ Changes are applied without disrupting traffic.
 1. Verify domain ownership
 2. Check DNS points to load balancer IP
 3. Certificate provisioning can take 15-30 minutes
-4. Check certificate status: `kubectl describe managedcertificate -n hello-world-ns`
+4. Check Ingress certificate annotation: `kubectl get ingress hello-world-ingress -n hello-world-ns -o jsonpath='{.metadata.annotations.ingress\.gcp\.kubernetes\.io/pre-shared-cert}'`
+5. Verify certificate exists in GCP: `gcloud compute ssl-certificates list --global`
 
 ## Best Practices
 
-1. **Always use HTTPS** - Enable managed certificates
+1. **Always use HTTPS** - Attach a valid pre-shared GCE SSL certificate to Ingress
 2. **Monitor Cloud Armor logs** - Set up alerts for anomalies
 3. **Regular rule updates** - Keep security policies current
 4. **Test in staging** - Validate rule changes before production
@@ -230,5 +231,5 @@ Changes are applied without disrupting traffic.
 - [Google Cloud Armor](https://cloud.google.com/armor/docs)
 - [GKE Ingress](https://cloud.google.com/kubernetes-engine/docs/concepts/ingress)
 - [BackendConfig CRD](https://cloud.google.com/kubernetes-engine/docs/how-to/ingress-features)
-- [Managed Certificates](https://cloud.google.com/kubernetes-engine/docs/how-to/managed-certs)
+- [Google-managed SSL certificates](https://cloud.google.com/load-balancing/docs/ssl-certificates/google-managed-certs)
 - [Network Endpoint Groups](https://cloud.google.com/load-balancing/docs/negs)

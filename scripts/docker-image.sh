@@ -7,7 +7,7 @@ set -euo pipefail
 # ------------------------------------------------------------
 # Config
 # ------------------------------------------------------------
-PROJECT_ID="gke-cluster-458701"
+GCP_PROJECT_ID="gke-cluster-458701"
 REGION="us-central1"
 REPO_NAME="hello-world-repo"
 IMAGE_NAME="hello-world"
@@ -25,7 +25,7 @@ PLATFORMS="linux/amd64,linux/arm64"
 #   fi
 # }
 
-# validate_env_var "PROJECT_ID"
+# validate_env_var "GCP_PROJECT_ID"
 # validate_env_var "REGION"
 # validate_env_var "REPO_NAME"
 # validate_env_var "IMAGE_NAME"
@@ -41,11 +41,11 @@ cd "${PROJECT_ROOT}/app/" || exit 1
 # ------------------------------------------------------------
 if ! gcloud artifacts repositories describe "${REPO_NAME}" \
 	--location="${REGION}" \
-	--project="${PROJECT_ID}" >/dev/null 2>&1; then
+	--project="${GCP_PROJECT_ID}" >/dev/null 2>&1; then
 	echo "📦 Creating Artifact Registry repo: ${REPO_NAME}..."
 	gcloud artifacts repositories create "${REPO_NAME}" \
 		--location="${REGION}" \
-		--project="${PROJECT_ID}" \
+		--project="${GCP_PROJECT_ID}" \
 		--repository-format=docker \
 		--description="Docker repository for ${IMAGE_NAME}"
 	echo "✅ Artifact Registry repo ${REPO_NAME} created."
@@ -56,7 +56,7 @@ fi
 # ------------------------------------------------------------
 # Image path
 # ------------------------------------------------------------
-IMAGE_PATH="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:${IMAGE_TAG}"
+IMAGE_PATH="${REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:${IMAGE_TAG}"
 
 # ------------------------------------------------------------
 # Check if image tag exists in Artifact Registry using gcloud

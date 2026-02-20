@@ -6,7 +6,7 @@ This script updates the kubeconfig file to access the GKE cluster.
 import subprocess  # nosec B404 - subprocess is used with static args and shell=False
 import sys
 
-PROJECT_ID = "gke-cluster-458701"
+GCP_PROJECT_ID = "gke-cluster-458701"
 REGION = "us-central1"
 CLUSTER_NAME = "gke-cluster-demo"
 
@@ -21,7 +21,7 @@ def main():
         "--region",
         REGION,
         "--project",
-        PROJECT_ID,
+        GCP_PROJECT_ID,
     )
     try:
         print(f"Running: {' '.join(cmd)}")

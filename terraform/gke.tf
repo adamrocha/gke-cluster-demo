@@ -11,9 +11,9 @@ resource "google_compute_project_metadata" "enable_oslogin" {
 # }
 
 resource "google_container_cluster" "gke_cluster_demo" {
-  # checkov:skip=CKV_GCP_65: Deffered
-  # checkov:skip=CKV_GCP_18: Enabled at the cluster level with private nodes
-  # checkov:skip=CKV_GCP_69: Enabled at the node pool level
+  # checkov:skip=CKV_GCP_65: Cost management is currently handled via project-level budget/alerting controls; cluster-specific setting is deferred for this demo.
+  # checkov:skip=CKV_GCP_18: Private nodes are enabled in private_cluster_config (enable_private_nodes=true), which is the intended control for this cluster design.
+  # checkov:skip=CKV_GCP_69: Legacy metadata endpoints are disabled in node_config.metadata (disable-legacy-endpoints=true) at node pool level.
   depends_on                  = [google_project_service.api_services]
   description                 = "Managed GKE cluster"
   name                        = var.cluster_name
@@ -31,6 +31,8 @@ resource "google_container_cluster" "gke_cluster_demo" {
   }
 
   master_authorized_networks_config {
+    # Reason: Public access is temporarily allowed for bootstrap/testing; tighten to operator CIDR before production use.
+    # trunk-ignore(trivy/GCP-0053)
     cidr_blocks {
       # cidr_block   = "${data.external.local_ip.result.ip}/32"
       cidr_block   = "0.0.0.0/0"
@@ -113,10 +115,11 @@ resource "google_container_node_pool" "node_pool_demo" {
     service_account = google_service_account.gke_service_account.email
     preemptible     = true
     machine_type    = var.enable_arm_nodes ? var.arm_machine_type : var.machine_type
-    image_type      = var.image_type
-    disk_type       = "pd-standard"
-    disk_size_gb    = 50
-    oauth_scopes    = ["https://www.googleapis.com/auth/cloud-platform"]
+    # COS_CONTAINERD is the recommended image type for GKE and supports both ARM and x86 nodes. It provides better performance and security compared to COS or Ubuntu images.
+    image_type   = "COS_CONTAINERD"
+    disk_type    = "pd-standard"
+    disk_size_gb = 50
+    oauth_scopes = ["https://www.googleapis.com/auth/cloud-platform"]
 
     workload_metadata_config {
       mode = "GKE_METADATA"
