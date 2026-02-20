@@ -1,6 +1,4 @@
 resource "google_project_service" "api_services" {
-  depends_on = [google_project_service.compute_api]
-
   for_each = toset([
     "compute.googleapis.com",
     "container.googleapis.com",
