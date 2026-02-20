@@ -36,6 +36,8 @@ Blue/Green deployment is a release strategy that reduces downtime and risk by ru
 - kubectl configured
 - Docker images in Google Artifact Registry
 - Namespace created (`hello-world-ns`)
+- Ingress certificate available as a GCE pre-shared certificate (`ingress.gcp.kubernetes.io/pre-shared-cert`)
+- No Kubernetes TLS Secret manifest is required for this repository's ingress setup
 
 ## Quick Start
 

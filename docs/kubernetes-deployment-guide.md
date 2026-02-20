@@ -20,6 +20,7 @@ This guide provides detailed instructions for deploying applications to the GKE 
 **Resources:** CPU 100m-250m, Memory 64Mi-128Mi  
 **Replicas:** 3 (rolling update)  
 **Health:** Liveness/readiness probes on `/` port 8080
+**TLS:** Ingress terminates HTTPS using `ingress.gcp.kubernetes.io/pre-shared-cert` (GCE SSL cert), not a Kubernetes `kubernetes.io/tls` Secret in manifests
 
 ## Quick Start
 
