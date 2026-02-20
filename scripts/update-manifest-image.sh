@@ -5,7 +5,7 @@ set -euo pipefail
 
 REPO_NAME="${1:-hello-world-repo}"
 IMAGE_TAG="${2:-1.2.5}" # Default to 1.2.5 if not provided
-VARIANT="${3-}" # Optional: "blue", "green", or empty for regular deployment
+VARIANT="${3-}"         # Optional: "blue", "green", or empty for regular deployment
 
 GCP_PROJECT_ID="${GCP_PROJECT_ID:-gke-cluster-458701}"
 REGION="${REGION:-us-central1}"
