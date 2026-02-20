@@ -241,7 +241,7 @@ jobs:
 
       - name: Verify ingress health
         run: |
-          ATTEMPTS=12
+          ATTEMPTS=20
           SLEEP_SECONDS=15
           for i in $(seq 1 "$ATTEMPTS"); do
             echo "Ingress health check attempt ${i}/${ATTEMPTS}..."
