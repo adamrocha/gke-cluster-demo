@@ -1,16 +1,10 @@
-resource "google_project_service" "compute_api" {
-  service                    = "compute.googleapis.com"
-  project                    = var.project_id
-  disable_on_destroy         = false
-  disable_dependent_services = true
-}
-
 resource "google_project_service" "api_services" {
   depends_on = [google_project_service.compute_api]
 
   for_each = toset([
-    # "containerscanning.googleapis.com",
+    "compute.googleapis.com",
     "container.googleapis.com",
+    # "containerscanning.googleapis.com",
     "cloudresourcemanager.googleapis.com",
     "artifactregistry.googleapis.com",
     "ondemandscanning.googleapis.com",
@@ -20,7 +14,7 @@ resource "google_project_service" "api_services" {
 
   project                    = var.project_id
   service                    = each.key
-  disable_on_destroy         = true
+  disable_on_destroy         = false
   disable_dependent_services = true
 }
 
