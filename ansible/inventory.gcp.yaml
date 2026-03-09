@@ -18,5 +18,9 @@ keyed_groups:
 hostnames:
   - name
 compose:
-  ansible_host: networkInterfaces[0].networkIP
+  ansible_connection: "'google.cloud.iap'"
+  ansible_gcloud_host: name
+  ansible_gcloud_project: project
+  ansible_gcloud_zone: zone
+  ansible_host: name
   ansible_python_interpreter: "'/usr/bin/python3'"

@@ -20,6 +20,7 @@ IMAGE_TAG := 1.2.5
 
 .PHONY: \
 	help check-gcp install-tools \
+	ansible-install-collections ansible-inventory-graph ansible-test-ssh-iap \
 	tf-bootstrap tf-format tf-init tf-validate tf-plan tf-apply tf-destroy tf-output tf-state \
 	tf-bucket create-bucket enable-versioning set-lifecycle add-labels delete-artifact-repo nuke-tf-bucket \
 	k8s-validate k8s-validate-server k8s-apply-ns k8s-apply k8s-delete k8s-status k8s-logs \
@@ -88,6 +89,9 @@ help:
 	@echo ""
 	@echo "🛠️  Utility Commands:"
 	@echo "  make install-tools       - Install required tools"
+	@echo "  make ansible-install-collections - Install Ansible collections from requirements file"
+	@echo "  make ansible-inventory-graph - Show Ansible dynamic inventory graph"
+	@echo "  make ansible-test-ssh-iap - Run Ansible SSH smoke test to nodes through IAP"
 	@echo "  make check-gcp           - Verify GCP credentials"
 	@echo "  make update-kubeconfig   - Update kubectl configuration"
 	@echo "  make image-verify-arch   - Verify image has amd64+arm64 manifests"
@@ -107,6 +111,21 @@ check-gcp:
 install-tools:
 	@echo "🚀 Running install-tools script..."
 	@/bin/bash ./scripts/install-tools.sh
+
+ansible-install-collections:
+	@echo "📦 Installing Ansible collections from ansible/requirements.yml..."
+	@poetry run ansible-galaxy collection install -r ansible/requirements.yml
+	@echo "✅ Ansible collections installed."
+
+ansible-inventory-graph:
+	@echo "🧭 Rendering Ansible inventory graph from ansible/inventory.gcp.yaml..."
+	@cd ansible && poetry run ansible-inventory --graph
+
+ansible-test-ssh-iap:
+	@echo "🔐 Running SSH smoke test to GCE nodes through IAP..."
+	@cd ansible && poetry run ansible-playbook \
+		-e ansible_user="$$(gcloud compute os-login describe-profile --format='value(posixAccounts[0].username)')" \
+		test-ssh.yaml
 
 tf-bootstrap: tf-bucket tf-format tf-init tf-validate tf-plan
 	@echo "🔄 Running terraform bootstrap..."

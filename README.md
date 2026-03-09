@@ -169,6 +169,9 @@ make bg-cleanup          # Delete blue/green resources
 make help                # Show all available commands
 make check-gcp           # Verify GCP credentials
 make install-tools       # Install required tools
+make ansible-install-collections # Install Ansible collections
+make ansible-inventory-graph # Show Ansible dynamic inventory graph
+make ansible-test-ssh-iap # Run SSH smoke test to GCE nodes through IAP
 make update-kubeconfig   # Update kubectl configuration
 ```
 

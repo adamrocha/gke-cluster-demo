@@ -3,6 +3,7 @@
 fetch-compute-instances.py
 Retrieves GCE compute instances for the GCP project.
 Requires: google-cloud-compute, google-auth
+gcloud compute ssh --tunnel-through-iap --project gke-cluster-458701 --zone us-central1-a <instance-name> --command "hostname -f; ip addr show"
 """
 
 import json
