@@ -84,12 +84,14 @@ variable "image_tag" {
   type        = string
 }
 
+# trunk-ignore(tflint/terraform_unused_declarations)
 variable "vault_ns" {
   description = "Name of the Vault namespace"
   default     = "vault-ns"
   type        = string
 }
 
+# trunk-ignore(tflint/terraform_unused_declarations)
 variable "monitoring_ns" {
   description = "Name of the monitoring namespace"
   default     = "monitoring-ns"
