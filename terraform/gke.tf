@@ -30,8 +30,13 @@ resource "google_container_cluster" "gke_cluster_demo" {
     managed_by = "terraform"
   }
 
+  release_channel {
+    channel = "RAPID"
+    # channel = "REGULAR"
+    # channel = "STABLE"
+  }
+
   master_authorized_networks_config {
-    # Reason: Public access is temporarily allowed for bootstrap/testing; tighten to operator CIDR before production use.
     # trunk-ignore(trivy/GCP-0053)
     cidr_blocks {
       # cidr_block   = "${data.external.local_ip.result.ip}/32"
@@ -63,11 +68,6 @@ resource "google_container_cluster" "gke_cluster_demo" {
   network_policy {
     enabled  = true
     provider = "CALICO"
-  }
-
-  # Set the release channel
-  release_channel {
-    channel = "REGULAR"
   }
 
   # Enable Binary Authorization

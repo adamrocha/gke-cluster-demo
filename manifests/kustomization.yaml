@@ -17,4 +17,4 @@ images:
     newTag: 1.2.5
 replicas:
   - name: hello-world
-    count: 3
+    count: 2
