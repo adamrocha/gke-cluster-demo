@@ -31,8 +31,8 @@ resource "google_container_cluster" "gke_cluster_demo" {
   }
 
   release_channel {
-    # channel = "RAPID"
-    channel = "REGULAR"
+    channel = "RAPID"
+    # channel = "REGULAR"
     # channel = "STABLE"
   }
 
