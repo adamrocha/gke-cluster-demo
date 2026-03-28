@@ -30,6 +30,8 @@ resource "google_container_cluster" "gke_cluster_demo" {
     managed_by = "terraform"
   }
 
+  min_master_version = "latest"
+
   release_channel {
     channel = "RAPID"
     # channel = "REGULAR"
