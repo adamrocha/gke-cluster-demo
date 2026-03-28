@@ -125,7 +125,7 @@ jobs:
         run: gcloud auth list --filter=status:ACTIVE --format="value(account)" > /dev/null
 
       - name: Cache Terraform plugins
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.terraform.d/plugin-cache
           key: terraform-${{ runner.os }}-${{ hashFiles('**/*.tf') }}
